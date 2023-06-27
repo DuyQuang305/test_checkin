@@ -1,0 +1,10 @@
+const startTime: Date = new Date();
+startTime.setHours(8);
+startTime.setMinutes(0);
+startTime.setSeconds(0);
+const finishTime: Date = new Date();
+finishTime.setHours(17);
+finishTime.setMinutes(30);
+finishTime.setSeconds(0);
+const SECRET_ROUNDS = 10;
+export { SECRET_ROUNDS, startTime, finishTime };
