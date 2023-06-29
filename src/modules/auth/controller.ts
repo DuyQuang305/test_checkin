@@ -2,13 +2,13 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
-import nodeCache from 'node-cache'
-import crypto from 'crypto'
+import crypto from 'crypto';
 
 import Token from '../../common/interface/token';
 import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { User } from '../../models/user';
-const cache = new nodeCache()
+
+import cache from '../../services/cache';
 
 export default class AuthController {
   async register(req: Request, res: Response) {
@@ -24,49 +24,46 @@ export default class AuthController {
         password: hashedPassword,
       }).save();
 
-      return res.status(201).json({msg:'created user successfully'})
-
+      return res.status(201).json({ msg: 'created user successfully' });
     } catch (error) {
       return res.status(500).json({ message: 'Dulicate Email!' });
     }
   }
 
   async sendConfirmationMessage(req: Request, res: Response) {
-      try {
-        const {email} = req.body;
+    try {
+      const { email } = req.body;
 
-        let username: String = undefined
+      let username: String = undefined;
 
-        const user = await User.findOne({email})
+      const user = await User.findOne({ email });
 
-        if (!user) {
-          return res.status(404).json({msg: 'User not found'})
-        }
+      if (!user) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
 
-        username = `${user.firstname} ${user.lastname}`
+      username = `${user.firstname} ${user.lastname}`;
 
-        const verificationCode = crypto.randomBytes(3).toString('hex')
+      const verificationCode = crypto.randomBytes(3).toString('hex');
 
-        cache.set(email, verificationCode, 60 * 5 * 1000)
+      cache.set(email, verificationCode, 60 * 5 * 1000);
 
-        console.log(verificationCode);
-        console.log( cache.get(email));
-        
+      console.log(verificationCode);
+      console.log(cache.get(email));
 
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.EMAIL,
-            pass: process.env.PASSWORD,
-          },
-        });
-  
-  
-        const mailOptions = {
-          from: process.env.EMAIL,
-          to: email,
-          subject: "Email verification",
-          html: `
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL,
+          pass: process.env.PASSWORD,
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Email verification',
+        html: `
                     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed;background-color:#f9f9f9" id="bodyTable">
                       <tbody>
                         <tr>
@@ -242,50 +239,49 @@ export default class AuthController {
                         </tr>
                       </tbody>
                     </table>`,
-        };
-  
-        transporter.sendMail(mailOptions, (error, info) => {
-          if (error) {
-              console.log("Error in sending email  " + error);
-          } else {
-              console.log("Email sent" + info.response);
-          }
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log('Error in sending email  ' + error);
+        } else {
+          console.log('Email sent' + info.response);
+        }
       });
-
-      } catch (error) {
-        console.error(error);
-      }
+    } catch (error) {
+      console.error(error);
     }
-  
-    async verifyUser(req:Request, res:Response) {
-      try {
-          const verificationCode = req.body.verificationCode; 
-          const email = req.params.email
-          const user = await User.findOne({ email });
-        console.log(cache.get(email));
-        
-          if(!user) {
-            return res.status(404).json({msg: 'User not found '})
-          } else {
-            if (verificationCode == cache.get(email)) {
-              user.isVerify = true;
-              await user.save()
+  }
 
-              cache.del(email);
-               
-              return res.status(201).json({msg: 'Account verification successful'})
-            } else {
-              return res.status(400).json({ 
-                error: 'Invalid verification code', 
-                details: 'The verification code you entered is invalid or has expired. Please check the code and try again.' 
-              });
-            }
-          }
-      
+  async verifyUser(req: Request, res: Response) {
+    try {
+      const verificationCode = req.body.verificationCode;
+      const email = req.params.email;
+      const user = await User.findOne({ email });
 
-      } catch (error) {
-          return res.status(500).json({msg: 'Internal Server Error'})
+      if (!user) {
+        return res.status(404).json({ msg: 'User not found ' });
+      } else {
+        if (verificationCode == cache.get(email)) {
+          user.isVerify = true;
+          await user.save();
+
+          cache.del(email);
+
+          return res
+            .status(201)
+            .json({ msg: 'Account verification successful' });
+        } else {
+          return res.status(400).json({
+            error: 'Invalid verification code',
+            details:
+              'The verification code you entered is invalid or has expired. Please check the code and try again.',
+          });
+        }
       }
+    } catch (error) {
+      return res.status(500).json({ msg: 'Internal Server Error' });
+    }
   }
 
   async login(req: Request, res: Response) {
@@ -303,7 +299,9 @@ export default class AuthController {
       }
 
       if (user.isVerify == false) {
-        return res.status(400).json({  message: "Please verify your email address before logging in" });
+        return res.status(400).json({
+          message: 'Please verify your email address before logging in',
+        });
       }
 
       const token = await signToken(res, user.id, user.email);
@@ -326,8 +324,7 @@ export default class AuthController {
       );
       return token;
     } catch (error) {
-      return res.status(500).json({msg: 'Server internal error'});
-      
+      return res.status(500).json({ msg: 'Server internal error' });
     }
   }
 }

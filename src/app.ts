@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
-import cors from 'cors'
+import cors from 'cors';
 import passport from 'passport';
 
 import Module from './modules';

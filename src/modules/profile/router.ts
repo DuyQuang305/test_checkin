@@ -10,12 +10,25 @@ const upload = require('../../middlewares/upload');
 const router = express.Router();
 const profileController = new ProfileController();
 
+router.get(
+  '/',
+  jwtGuard,
+  profileController.profile,
+);
+
 router.patch(
-  '/edit',
+  '/',
   jwtGuard,
   Validation(userSchema),
   upload.single('avatar'),
-  profileController.edit,
+  profileController.editProfile,
+);
+
+router.patch(
+  '/email',
+  jwtGuard,
+  Validation(userSchema),
+  profileController.editEmail,
 );
 router.delete('/', jwtGuard, profileController.delete);
 router.get('/', jwtGuard, profileController.profile);
