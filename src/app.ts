@@ -1,6 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
+import cors from 'cors'
 import passport from 'passport';
 
 import Module from './modules';
@@ -8,14 +9,16 @@ import JWTStrategy from './services/jwtStrategy';
 import connect from './common/database';
 import error from './middlewares/error';
 
-const app = express();
 dotenv.config();
+const app = express();
 
 connect();
 
 // Middleware for all method
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // Use Helmet!
 app.use(

@@ -12,5 +12,7 @@ const authController = new AuthController();
 router.post('/register', Validation(registerSchema), authController.register);
 router.post('/login', Validation(LoginSchema), authController.login);
 router.post('/refresh', authController.refreshToken);
+router.post('/sendVerificationCode', authController.sendConfirmationMessage);
+router.get('/verifyUser/:email', authController.verifyUser);
 
 export default router;

@@ -11,7 +11,7 @@ dotenv.config();
 
 connect();
 
- async function initAdmin(): Promise<void> {
+async function initAdmin(): Promise<void> {
   const existingUser = await User.findOne({ email: process.env.ADMIN_MAIL });
   if (!existingUser) {
     const admin = new Manager(

@@ -16,28 +16,31 @@ export default class ProfileController {
     next: NextFunction,
   ): Promise<object> {
     try {
-      const { fullname, email, phoneNumber, address, password } = req.body;
+      const { firstname, lastname, email, password, avatar } = req.body;
 
       let hashedPassword = undefined;
+      let avatarUser = undefined;
 
       if (password) {
         hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
+      } else if (req.file) {
+        avatarUser = req.file.path;
       }
 
       await User.findByIdAndUpdate(
         { _id: req.user.id },
         {
-          fullname,
+          firstname,
+          lastname,
           email,
-          phoneNumber,
-          address,
+          avatar: avatarUser,
           password: hashedPassword,
         },
       );
 
       return res.json({ mesage: Message.ProfileUpdated });
     } catch (error) {
-      next(error);
+      return res.status(500).json({error: error.message})
     }
   }
 

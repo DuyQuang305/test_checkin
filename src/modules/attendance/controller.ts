@@ -13,9 +13,9 @@ export default class AttendanceController {
 
       const startTime: Date = new Date();
 
-      startTime.setHours(8);
-      startTime.setMinutes(0);
-      startTime.setSeconds(0);
+      startTime.setUTCHours(8);
+      startTime.setUTCMinutes(0);
+      startTime.setUTCSeconds(0);
 
       const attendanceResult = await attendance();
 
@@ -35,6 +35,8 @@ export default class AttendanceController {
           user: user,
           checkIn: attendanceResult.time,
         });
+        console.log(attendance.checkIn);
+        console.log(startTime);
 
         if (Number(attendance.checkIn) - Number(startTime) > 0) {
           attendance.isLateArrival = true;
@@ -62,9 +64,9 @@ export default class AttendanceController {
       // Finish Time 17h30
       const finishTime = new Date();
 
-      finishTime.setHours(17);
-      finishTime.setMinutes(30);
-      finishTime.setSeconds(0);
+      finishTime.setUTCHours(17);
+      finishTime.setUTCMinutes(30);
+      finishTime.setUTCSeconds(0);
 
       const existingAttendance = await Attendance.findOne({
         user,
@@ -77,6 +79,8 @@ export default class AttendanceController {
         return res.status(400).json({ message: "You haven't checked in yet" });
       } else {
         existingAttendance.checkOut = attendanceResult.time;
+        console.log(existingAttendance.checkOut);
+        console.log(finishTime);
 
         if (Number(existingAttendance.checkOut) - Number(finishTime) < 0) {
           existingAttendance.isLeaveEarly = true;
@@ -96,7 +100,7 @@ async function attendance(): Promise<{ time: Date; day: Date }> {
   const now: Date = new Date();
   const timezoneOffset = 7 * 60 * 60 * 1000;
   const time: Date = new Date(now.getTime() + timezoneOffset);
-  const day = new Date(now.setHours(12, 0, 0, 0));
+  const day = new Date(now.setHours(0, 0, 0, 0));
   const attendance = { time, day };
 
   return attendance;
