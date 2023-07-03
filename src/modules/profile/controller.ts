@@ -7,6 +7,8 @@ import { Message } from '../../common/constant/message';
 
 import cache from '../../services/cache';
 
+import removeExistsFile from '../../middlewares/removeExistsFile'
+
 export default class ProfileController {
   async profile(req: Request, res: Response): Promise<void> {
     res.status(200).json(req.user);
@@ -23,20 +25,26 @@ export default class ProfileController {
       let hashedPassword = undefined;
       let avatarUser = undefined;
 
+      const user = await User.findById(req.user.id)
+      
       if (password) {
         hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
       } else if (req.file) {
+        removeExistsFile(user.avatar)
         avatarUser = req.file.path;
       }
 
-      await User.findByIdAndUpdate(
-        { _id: req.user.id },
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: user._id },
         {
-          firstname,
-          lastname,
-          avatar: avatarUser,
-          password: hashedPassword,
+          $set: {
+            firstname: firstname,
+            lastname: lastname,
+            avatar: avatarUser,
+            password: hashedPassword,
+          },
         },
+        { new: true }
       );
 
       return res.json({ mesage: Message.ProfileUpdated });

@@ -123,6 +123,3 @@ async function attendance(): Promise<{ time: Date; day: Date ; dayOfWeek: String
   return attendance;
 }
 
-async function isAllowedIps(ip) {
-
-}
