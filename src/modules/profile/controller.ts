@@ -64,8 +64,12 @@ export default class ProfileController {
             email,
           },
         );
-        cache.del(email)
-        return res.status(201).json({ msg: 'Your new email has been confirmed and saved successfully.' });
+        cache.del(email);
+        return res
+          .status(201)
+          .json({
+            msg: 'Your new email has been confirmed and saved successfully.',
+          });
       } else {
         return res.status(400).json({
           error: 'Invalid verification code',

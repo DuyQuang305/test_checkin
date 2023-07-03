@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const attendanceSchema = new Schema({
   checkIn: { type: Date },
   checkOut: { type: Date },
-  dayOfWeek: {type: String},
+  dayOfWeek: { type: String },
   isLateArrival: { type: Boolean, default: false },
   isLeaveEarly: { type: Boolean, default: false },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },

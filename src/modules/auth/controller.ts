@@ -11,7 +11,6 @@ import { User } from '../../models/user';
 import cache from '../../services/cache';
 import sendMail from '../../services/sendMail';
 
-
 export default class AuthController {
   async register(req: Request, res: Response) {
     try {
@@ -235,7 +234,6 @@ export default class AuthController {
       sendMail(mailOptions);
 
       return res.status(201).json({ msg: 'Sent message successfully' });
-
     } catch (error) {
       console.error(error);
     }

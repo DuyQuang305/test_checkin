@@ -17,10 +17,6 @@ export default class AttendanceController {
 
       const attendanceResult = await attendance();
 
-      console.log(attendanceResult.time);
-      console.log(attendanceResult.dayOfWeek);
-
-
       const existingAttendance = await Attendance.findOne({
         user,
         room: roomId,
@@ -40,8 +36,18 @@ export default class AttendanceController {
           checkIn: attendanceResult.time,
           dayOfWeek: attendanceResult.dayOfWeek
         }); 
-       
+
+        const time = room.time.find(t => t.day === attendance.dayOfWeek)
         
+        const startTime = time ? time.start_time : null
+        
+        if (!startTime) {
+          return res.status(400).json({msg: 'No attendance schedule today'})
+        }
+
+        const isLateArrival = attendance.checkIn > startTime  
+
+        attendance.isLateArrival = isLateArrival
 
         await attendance.save();
 
@@ -97,12 +103,14 @@ export default class AttendanceController {
   }
 }
 
-async function attendance(): Promise<{ time: Date; day: Date ; dayOfWeek: String }> {
+async function attendance(): Promise<{ time: Date; day: Date ; dayOfWeek: String, dayIndexOfWeek: Number }> {
   const now: Date = new Date();
 
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   const dayOfWeek = days[now.getDay()];
+
+  const dayIndexOfWeek: Number = now.getDay()
 
   const timezoneOffset = 7 * 60 * 60 * 1000;
  
@@ -110,7 +118,7 @@ async function attendance(): Promise<{ time: Date; day: Date ; dayOfWeek: String
 
   const day: Date = new Date(now.setHours(7,0,0,0))
 
-  const attendance = { time, day ,dayOfWeek };
+  const attendance = { time, day ,dayOfWeek, dayIndexOfWeek};
 
   return attendance;
 }
