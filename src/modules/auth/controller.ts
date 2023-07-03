@@ -9,6 +9,8 @@ import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { User } from '../../models/user';
 
 import cache from '../../services/cache';
+import sendMail from '../../services/sendMail';
+
 
 export default class AuthController {
   async register(req: Request, res: Response) {
@@ -47,17 +49,6 @@ export default class AuthController {
       const verificationCode = crypto.randomBytes(3).toString('hex');
 
       cache.set(email, verificationCode, 60 * 5 * 1000);
-
-      console.log(verificationCode);
-      console.log(cache.get(email));
-
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL,
-          pass: process.env.PASSWORD,
-        },
-      });
 
       const mailOptions = {
         from: process.env.EMAIL,
@@ -241,13 +232,10 @@ export default class AuthController {
                     </table>`,
       };
 
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.log('Error in sending email  ' + error);
-        } else {
-          console.log('Email sent' + info.response);
-        }
-      });
+      sendMail(mailOptions);
+
+      return res.status(201).json({ msg: 'Sent message successfully' });
+
     } catch (error) {
       console.error(error);
     }
@@ -339,7 +327,7 @@ export async function signToken(
   const payload = { id, email };
 
   const access_token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '1h',
+    expiresIn: '2h',
   });
   const refresh_token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: '7d',

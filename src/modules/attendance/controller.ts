@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
 import { Attendance } from '../../models/attendance';
+import { Room } from '../../models/room'
 
 export default class AttendanceController {
   async checkin(
@@ -9,21 +10,23 @@ export default class AttendanceController {
     next: NextFunction,
   ): Promise<object> {
     try {
+      const {roomId} = req.params
       const user = req.user.id;
 
-      const startTime: Date = new Date();
-
-      startTime.setUTCHours(8);
-      startTime.setUTCMinutes(0);
-      startTime.setUTCSeconds(0);
+      const room = await Room.findById(roomId)
 
       const attendanceResult = await attendance();
 
+      console.log(attendanceResult.time);
+      console.log(attendanceResult.dayOfWeek);
+
+
       const existingAttendance = await Attendance.findOne({
-        user: user,
+        user,
+        room: roomId,
         checkIn: {
-          $gte: attendanceResult.day,
-        },
+          $gte: attendanceResult.day
+        }
       });
 
       if (existingAttendance) {
@@ -32,22 +35,20 @@ export default class AttendanceController {
           .json({ message: 'You have already checked in earlier' });
       } else {
         const attendance = new Attendance({
-          user: user,
+          user,
+          room: roomId,
           checkIn: attendanceResult.time,
-        });
-        console.log(attendance.checkIn);
-        console.log(startTime);
-
-        if (Number(attendance.checkIn) - Number(startTime) > 0) {
-          attendance.isLateArrival = true;
-        }
+          dayOfWeek: attendanceResult.dayOfWeek
+        }); 
+       
+        
 
         await attendance.save();
 
         return res.status(201).json({ message: 'Checkin successfully' });
       }
     } catch (err) {
-      next(err);
+      return res.status(500).json(err.message)
     }
   }
 
@@ -71,7 +72,7 @@ export default class AttendanceController {
       const existingAttendance = await Attendance.findOne({
         user,
         checkIn: {
-          $gte: attendanceResult.day,
+          $gte: attendanceResult.dayOfWeek,
         },
       });
 
@@ -96,12 +97,24 @@ export default class AttendanceController {
   }
 }
 
-async function attendance(): Promise<{ time: Date; day: Date }> {
+async function attendance(): Promise<{ time: Date; day: Date ; dayOfWeek: String }> {
   const now: Date = new Date();
+
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  const dayOfWeek = days[now.getDay()];
+
   const timezoneOffset = 7 * 60 * 60 * 1000;
+ 
   const time: Date = new Date(now.getTime() + timezoneOffset);
-  const day = new Date(now.setHours(0, 0, 0, 0));
-  const attendance = { time, day };
+
+  const day: Date = new Date(now.setHours(7,0,0,0))
+
+  const attendance = { time, day ,dayOfWeek };
 
   return attendance;
+}
+
+async function isAllowedIps(ip) {
+
 }

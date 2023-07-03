@@ -2,12 +2,24 @@ import mongoose from 'mongoose';
 
 const Schema = mongoose.Schema;
 
-const roomSchema = new Schema({
-  name: { type: String, required: true, maxLength: 50 },
-  ipAddress: { type: [String], required: true },
-  dates: { type: [Date], required: true },
-  participants: [{ type: Schema.Types.ObjectId, ref: 'User', required: true }],
-  owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+const roomSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  allowed_ips: { type: [String], default: [] },
+  time: {
+    type: [
+      {
+        start_time: { type: Date, required: true },
+        end_time: { type: Date, required: true },
+        day: { type: String, required: true },
+      },
+    ],
+    required: true,
+  },
+  members: {
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    default: [],
+  },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 });
 
 export const Room = mongoose.model('Room', roomSchema);

@@ -10,11 +10,7 @@ const upload = require('../../middlewares/upload');
 const router = express.Router();
 const profileController = new ProfileController();
 
-router.get(
-  '/',
-  jwtGuard,
-  profileController.profile,
-);
+router.get('/', jwtGuard, profileController.profile);
 
 router.patch(
   '/',

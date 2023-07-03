@@ -9,7 +9,7 @@ import cache from '../../services/cache';
 
 export default class ProfileController {
   async profile(req: Request, res: Response): Promise<void> {
-    res.status(200).json(req.user)
+    res.status(200).json(req.user);
   }
 
   async editProfile(
@@ -64,7 +64,8 @@ export default class ProfileController {
             email,
           },
         );
-        return res.status(201).json({ msg: 'Email update successfully' });
+        cache.del(email)
+        return res.status(201).json({ msg: 'Your new email has been confirmed and saved successfully.' });
       } else {
         return res.status(400).json({
           error: 'Invalid verification code',
