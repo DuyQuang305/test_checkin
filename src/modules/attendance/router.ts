@@ -9,6 +9,6 @@ const attendanceController = new AttendanceController();
 const router = express.Router();
 
 router.post('/checkin/:roomId', jwtGuard, attendanceController.checkin);
-router.post('/checkout', jwtGuard, attendanceController.checkout);
+router.post('/checkout/:roomId', jwtGuard, attendanceController.checkout);
 
 export default router;

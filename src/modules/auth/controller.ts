@@ -325,11 +325,9 @@ export async function signToken(
   const payload = { id, email };
 
   const access_token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '2h',
-  });
-  const refresh_token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
+  const refresh_token = jwt.sign(payload, process.env.JWT_SECRET);
 
   if (refreshToken) {
     const refreshTokenExists = await User.findOne({

@@ -8,25 +8,27 @@ import roleGuard from '../../middlewares/roleGuard';
 const router = express.Router();
 const statisticController = new StatisticController();
 
-router.get('/paginate', jwtGuard, roleGuard, statisticController.paginate);
+// Xem lịch sử điểm danh từ trước đến nay
+router.get('/checkinHistory', jwtGuard, statisticController.attendanceHistory);
 
-router.get('/find-by-day', jwtGuard, roleGuard, statisticController.findByDay);
-router.get(
-  '/find-by-user',
-  jwtGuard,
-  roleGuard,
-  statisticController.findByUser,
-);
+// Xem lịch sử điểm danh theo phòng
+router.get('/attendanceByRoom/:room', jwtGuard, statisticController.attendanceByRoom);
 
-router.get('/:id', jwtGuard, roleGuard, statisticController.getOneById);
-router.get('/', jwtGuard, roleGuard, statisticController.getAll);
+// Xem lịch sử điểm danh theo ngày trong tuần
+router.get('/AttendanceByDayOfWeek', jwtGuard, statisticController.attendanceByDayOfWeek);
 
-router.delete(
-  '/delete-all',
-  jwtGuard,
-  roleGuard,
-  statisticController.deleteAll,
-);
-router.delete('/:id', jwtGuard, roleGuard, statisticController.delete);
+router.get('/lateArrivals', jwtGuard, statisticController.lateArrivals);
+
+router.get('/leaveEarly', jwtGuard, statisticController.leaveEarly);
+
+
+router.get('/lateArrivalsByUser', jwtGuard, statisticController.lateArrivals);
+
+router.get('/leaveEarlyByUser', jwtGuard, statisticController.leaveEarly);
+
+
+
+
+
 
 export default router;

@@ -3,17 +3,19 @@ import { Room } from '../../models/room';
 import { User } from '../../models/user';
 
 import sendEmail from '../../services/sendMail';
+import getIpAddress from '../../services/IpAddress';
 
 require('dotenv').config;
 
 export default class Controller {
   async createRoom(req: Request | any, res: Response, next: NextFunction) {
     try {
-      const { name, allowed_ips, time } = req.body;
+      const ipAddress = await getIpAddress();
+      const { name, time } = req.body;
 
       const room = new Room({
         name,
-        allowed_ips,
+        allowed_ip: ipAddress,
         time,
         owner: req.user.id,
       });
@@ -62,7 +64,7 @@ export default class Controller {
         return res.status(400).json({ msg: 'Invalid email' });
       }
 
-      const roomExists = await User.findById({ roomId });
+      const roomExists = await Room.findById(roomId);
 
       if (!roomExists) {
         return res.status(400).json({ msg: 'Room not found' });
@@ -78,8 +80,8 @@ export default class Controller {
       }
 
       return res.status(201).json({ msg: 'Invite members successfully' });
-    } catch {
-      return res.status(401).json({ msg: 'Create room failed' });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
     }
   }
 
@@ -103,11 +105,9 @@ export default class Controller {
         return res.status(500).json({ msg: 'Failed to update room time' });
       }
 
-      return res
-        .status(201)
-        .json({
-          msg: 'The time for the meeting room has been successfully updated',
-        });
+      return res.status(201).json({
+        msg: 'The time for the meeting room has been successfully updated',
+      });
     } catch (error) {
       return res.status(500).json(error.message);
     }
@@ -133,11 +133,9 @@ export default class Controller {
         return res.status(500).json({ msg: 'Failed to change room time' });
       }
 
-      return res
-        .status(201)
-        .json({
-          msg: 'The time for the meeting room has been successfully updated',
-        });
+      return res.status(201).json({
+        msg: 'The time for the meeting room has been successfully updated',
+      });
     } catch (error) {
       return res.status(500).json(error.message);
     }
@@ -162,11 +160,9 @@ export default class Controller {
         return res.status(500).json({ msg: 'Failed to delete room time' });
       }
 
-      return res
-        .status(201)
-        .json({
-          msg: 'The time for the meeting room has been successfully deleted',
-        });
+      return res.status(201).json({
+        msg: 'The time for the meeting room has been successfully deleted',
+      });
     } catch (error) {
       return res.status(500).json(error.message);
     }

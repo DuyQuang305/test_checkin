@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const roomSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  allowed_ips: { type: [String], default: [] },
+  allowed_ip: { type: String },
   time: {
     type: [
       {

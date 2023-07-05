@@ -7,7 +7,7 @@ import { Message } from '../../common/constant/message';
 
 import cache from '../../services/cache';
 
-import removeExistsFile from '../../middlewares/removeExistsFile'
+import removeExistsFile from '../../middlewares/removeExistsFile';
 
 export default class ProfileController {
   async profile(req: Request, res: Response): Promise<void> {
@@ -25,12 +25,12 @@ export default class ProfileController {
       let hashedPassword = undefined;
       let avatarUser = undefined;
 
-      const user = await User.findById(req.user.id)
-      
+      const user = await User.findById(req.user.id);
+
       if (password) {
         hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
       } else if (req.file) {
-        removeExistsFile(user.avatar)
+        removeExistsFile(user.avatar);
         avatarUser = req.file.path;
       }
 
@@ -44,7 +44,7 @@ export default class ProfileController {
             password: hashedPassword,
           },
         },
-        { new: true }
+        { new: true },
       );
 
       return res.json({ mesage: Message.ProfileUpdated });
@@ -73,11 +73,9 @@ export default class ProfileController {
           },
         );
         cache.del(email);
-        return res
-          .status(201)
-          .json({
-            msg: 'Your new email has been confirmed and saved successfully.',
-          });
+        return res.status(201).json({
+          msg: 'Your new email has been confirmed and saved successfully.',
+        });
       } else {
         return res.status(400).json({
           error: 'Invalid verification code',

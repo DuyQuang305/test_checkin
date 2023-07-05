@@ -13,7 +13,7 @@ router.post('/create', jwtGuard, roomController.createRoom);
 // Send mail inviteMember
 router.put('/inviteMember', jwtGuard, roomController.inviteMember);
 // Add member to room after member confirms joining
-router.put('/addMember/:roomId', jwtGuard, roomController.addMember);
+router.put('/addMember/:roomId', roomController.addMember);
 
 router.put('/addTime/:roomId', roomController.addTime);
 router.put('/changeTime/:roomId/:timeId', roomController.changeTime);
