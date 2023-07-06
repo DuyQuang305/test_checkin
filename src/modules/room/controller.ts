@@ -5,9 +5,29 @@ import { User } from '../../models/user';
 import sendEmail from '../../services/sendMail';
 import getIpAddress from '../../services/IpAddress';
 
+import createRespones from '../../common/function/createResponse';
+
 require('dotenv').config;
 
 export default class Controller {
+  async showRoom(req: Request | any, res: Response, next: NextFunction) {
+    try {
+      const { roomId } = req.params;
+      const room = await Room.findById(roomId)
+        .populate('owner', 'firstname lastname avatar')
+        .populate('members', 'firstname lastname avatar');
+      return createRespones(
+        res,
+        200,
+        true,
+        'Get room by id successfully',
+        room,
+      );
+    } catch (error) {
+      return createRespones(res, 500, false, error.message);
+    }
+  }
+
   async createRoom(req: Request | any, res: Response, next: NextFunction) {
     try {
       const ipAddress = await getIpAddress();
@@ -22,11 +42,11 @@ export default class Controller {
 
       await room.save();
       if (!room) {
-        return res.status(400).json({ msg: 'Create room failed' });
+        return createRespones(res, 400, false, 'Create room failed');
       }
-      return res.status(201).json({ msg: 'Create room successfully', room });
+      return createRespones(res, 201, true, 'Create room successfully', room);
     } catch (error) {
-      return res.status(500).json(error.message);
+      return createRespones(res, 500, false, error.message);
     }
   }
 
@@ -46,9 +66,9 @@ export default class Controller {
         sendEmail(mailOptions);
       });
 
-      return res.status(201).json({ msg: 'Invite members successfully' });
-    } catch {
-      return res.status(401).json({ msg: 'Create room failed' });
+      return createRespones(res, 201, true, 'Invite members successfully');
+    } catch (error) {
+      return createRespones(res, 500, false, error.message);
     }
   }
 
@@ -58,30 +78,37 @@ export default class Controller {
       const { roomId } = req.params;
       const { email } = req.body;
 
-      const emailExists = await User.findOne({ email: email });
+      const userExists = await User.findOne({ email: email });
 
-      if (!emailExists) {
-        return res.status(400).json({ msg: 'Invalid email' });
+      if (!userExists) {
+        return createRespones(res, 400, false, 'Invalid email');
       }
 
       const roomExists = await Room.findById(roomId);
 
       if (!roomExists) {
-        return res.status(400).json({ msg: 'Room not found' });
+        return createRespones(res, 400, false, 'Room not found');
+      } else if (roomExists.members.includes(userExists._id)) {
+        return createRespones(
+          res,
+          400,
+          false,
+          'This member has already joined the room before',
+        );
       }
 
       const updateRoom = await Room.updateOne(
         { _id: roomId },
-        { $push: { members: roomExists._id } },
+        { $push: { members: userExists._id } },
       );
 
       if (!updateRoom) {
-        return res.status(500).json({ msg: 'Failed to update room time' });
+        return createRespones(res, 400, false, 'Failed to update room time');
       }
 
-      return res.status(201).json({ msg: 'Invite members successfully' });
+      return createRespones(res, 201, true, 'Add members successfully');
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      return createRespones(res, 500, false, error.message);
     }
   }
 
@@ -93,7 +120,7 @@ export default class Controller {
       const roomExists = await Room.findById(roomId);
 
       if (!roomExists) {
-        return res.status(400).json({ msg: 'Room not found' });
+        return createRespones(res, 400, false, 'Room not found');
       }
 
       const updatedRoom = await Room.updateOne(
@@ -102,18 +129,21 @@ export default class Controller {
       );
 
       if (!updatedRoom) {
-        return res.status(500).json({ msg: 'Failed to update room time' });
+        return createRespones(res, 400, false, 'Failed to update room time');
       }
 
-      return res.status(201).json({
-        msg: 'The time for the meeting room has been successfully updated',
-      });
+      return createRespones(
+        res,
+        201,
+        true,
+        'The time for the meeting room has been successfully updated',
+      );
     } catch (error) {
-      return res.status(500).json(error.message);
+      return createRespones(res, 500, false, error.message);
     }
   }
 
-  async changeTime(req: Request | any, res: Response, next: NextFunction) {
+  async  changeTime(req: Request | any, res: Response, next: NextFunction) {
     try {
       const { roomId, timeId } = req.params;
       const { time } = req.body;
@@ -121,7 +151,7 @@ export default class Controller {
       const roomExists = await Room.findById(roomId);
 
       if (!roomExists) {
-        return res.status(400).json({ msg: 'Room not found' });
+        return createRespones(res, 400, false, 'Room not found');
       }
 
       const updatedRoom = await Room.updateOne(
@@ -130,14 +160,17 @@ export default class Controller {
       );
 
       if (!updatedRoom) {
-        return res.status(500).json({ msg: 'Failed to change room time' });
+        return createRespones(res, 400, false, 'Failed to change room time');
       }
 
-      return res.status(201).json({
-        msg: 'The time for the meeting room has been successfully updated',
-      });
+      return createRespones(
+        res,
+        201,
+        true,
+        'The time for the meeting room has been successfully updated',
+      );
     } catch (error) {
-      return res.status(500).json(error.message);
+      return createRespones(res, 500, false, error.message);
     }
   }
 
@@ -148,7 +181,7 @@ export default class Controller {
       const roomExists = await Room.findById(roomId);
 
       if (!roomExists) {
-        return res.status(400).json({ msg: 'Room not found' });
+        return createRespones(res, 400, false, 'Room not found');
       }
 
       const updatedRoom = await Room.updateOne(
@@ -157,14 +190,17 @@ export default class Controller {
       );
 
       if (!updatedRoom) {
-        return res.status(500).json({ msg: 'Failed to delete room time' });
+        return createRespones(res, 400, false, 'Failed to delete room time');
       }
 
-      return res.status(201).json({
-        msg: 'The time for the meeting room has been successfully deleted',
-      });
+      return createRespones(
+        res,
+        201,
+        true,
+        'The time for the meeting room has been successfully deleted',
+      );
     } catch (error) {
-      return res.status(500).json(error.message);
+      return createRespones(res, 500, false, error.message);
     }
   }
 }

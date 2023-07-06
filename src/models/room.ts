@@ -10,7 +10,6 @@ const roomSchema = new mongoose.Schema({
       {
         start_time: { type: Date, required: true },
         end_time: { type: Date, required: true },
-        day: { type: String, required: true },
       },
     ],
     required: true,

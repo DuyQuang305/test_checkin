@@ -8,6 +8,8 @@ import Token from '../../common/interface/token';
 import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { User } from '../../models/user';
 
+import createResponse from '../../common/function/createResponse';
+
 import cache from '../../services/cache';
 import sendMail from '../../services/sendMail';
 
@@ -25,9 +27,9 @@ export default class AuthController {
         password: hashedPassword,
       }).save();
 
-      return res.status(201).json({ msg: 'created user successfully' });
+      return createResponse(res, 201, true, 'Created user successfully');
     } catch (error) {
-      return res.status(500).json({ message: 'Dulicate Email!' });
+      return createResponse(res, 500, false, 'Dulicate Email!');
     }
   }
 
@@ -40,7 +42,7 @@ export default class AuthController {
       const user = await User.findOne({ email });
 
       if (!user) {
-        return res.status(404).json({ msg: 'User not found' });
+        return createResponse(res, 404, false, 'User not found');
       }
 
       username = `${user.firstname} ${user.lastname}`;
@@ -233,9 +235,9 @@ export default class AuthController {
 
       sendMail(mailOptions);
 
-      return res.status(201).json({ msg: 'Sent message successfully' });
+      return createResponse(res, 201, true, 'Sent message successfully');
     } catch (error) {
-      console.error(error);
+      return createResponse(res, 500, false, error.message);
     }
   }
 
@@ -246,7 +248,7 @@ export default class AuthController {
       const user = await User.findOne({ email });
 
       if (!user) {
-        return res.status(404).json({ msg: 'User not found ' });
+        return createResponse(res, 404, false, 'User not found');
       } else {
         if (verificationCode == cache.get(email)) {
           user.isVerify = true;
@@ -254,19 +256,18 @@ export default class AuthController {
 
           cache.del(email);
 
-          return res
-            .status(201)
-            .json({ msg: 'Account verification successful' });
+          return createResponse(res, 201, true, 'Account verification successful');
         } else {
-          return res.status(400).json({
-            error: 'Invalid verification code',
-            details:
-              'The verification code you entered is invalid or has expired. Please check the code and try again.',
-          });
+          return createResponse(
+            res,
+            400,
+            false,
+            'The verification code you entered is invalid or has expired. Please check the code and try again',
+          );
         }
       }
     } catch (error) {
-      return res.status(500).json({ msg: 'Internal Server Error' });
+      return createResponse(res, 500, false, error.message);
     }
   }
 
@@ -276,24 +277,27 @@ export default class AuthController {
       const user = await User.findOne({ email: email });
 
       if (!user) {
-        return res.status(400).json({ message: 'Invalid email' });
+        return createResponse(res, 400, false, 'Invalid email');
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        return res.status(400).json({ message: 'Invalid password' });
+        return createResponse(res, 400, false, 'Invalid password');
       }
 
       if (user.isVerify == false) {
-        return res.status(400).json({
-          message: 'Please verify your email address before logging in',
-        });
+        return createResponse(
+          res,
+          400,
+          false,
+          'Please verify your email address before logging in',
+        );
       }
 
       const token = await signToken(res, user.id, user.email);
       return token;
     } catch (error) {
-      return res.status(500).json({ message: error.message });
+      return createResponse(res, 500, false, error.message);
     }
   }
 
@@ -310,7 +314,7 @@ export default class AuthController {
       );
       return token;
     } catch (error) {
-      return res.status(500).json({ msg: 'Server internal error' });
+      return createResponse(res, 500, false, error.message);
     }
   }
 }
@@ -321,7 +325,7 @@ export async function signToken(
   id: object,
   email: string,
   refreshToken?: string,
-): Promise<Token | object> {
+): Promise<Token | object | void> {
   const payload = { id, email };
 
   const access_token = jwt.sign(payload, process.env.JWT_SECRET, {
@@ -341,7 +345,7 @@ export async function signToken(
         },
       );
     } else {
-      return res.status(400).json({ message: 'Invalid Token' });
+      return createResponse(res, 400, false, 'Invalid Token');
     }
   } else {
     await User.updateOne(
@@ -351,6 +355,8 @@ export async function signToken(
       },
     );
   }
-
-  return res.json({ access_token, refresh_token });
+  return createResponse(res, 201, true, 'Login successfully', {
+    access_token,
+    refresh_token,
+  });
 }

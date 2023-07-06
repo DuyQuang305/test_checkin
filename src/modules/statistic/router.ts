@@ -12,23 +12,25 @@ const statisticController = new StatisticController();
 router.get('/checkinHistory', jwtGuard, statisticController.attendanceHistory);
 
 // Xem lịch sử điểm danh theo phòng
-router.get('/attendanceByRoom/:room', jwtGuard, statisticController.attendanceByRoom);
+router.get(
+  '/attendanceByRoom/:room',
+  jwtGuard,
+  statisticController.attendanceByRoom,
+);
 
 // Xem lịch sử điểm danh theo ngày trong tuần
-router.get('/AttendanceByDayOfWeek', jwtGuard, statisticController.attendanceByDayOfWeek);
+router.get(
+  '/AttendanceByDay',
+  jwtGuard,
+  statisticController.attendanceByDay,
+);
 
 router.get('/lateArrivals', jwtGuard, statisticController.lateArrivals);
 
 router.get('/leaveEarly', jwtGuard, statisticController.leaveEarly);
 
-
 router.get('/lateArrivalsByUser', jwtGuard, statisticController.lateArrivals);
 
 router.get('/leaveEarlyByUser', jwtGuard, statisticController.leaveEarly);
-
-
-
-
-
 
 export default router;

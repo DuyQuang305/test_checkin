@@ -1,24 +1,26 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Request, Response, RequestHandler } from 'express';
 import bcrypt from 'bcrypt';
 
 import { User } from '../../models/user';
 import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { Message } from '../../common/constant/message';
 
+import createResponse from '../../common/function/createResponse';
+
 import cache from '../../services/cache';
 
 import removeExistsFile from '../../middlewares/removeExistsFile';
 
 export default class ProfileController {
-  async profile(req: Request, res: Response): Promise<void> {
-    res.status(200).json(req.user);
+  async profile(req: Request, res: Response): Promise<any> {
+    return createResponse(res, 200, true, 'Get profile successfully', req.user);
   }
 
   async editProfile(
     req: Request | any,
     res: Response,
     next: NextFunction,
-  ): Promise<object> {
+  ): Promise<any> {
     try {
       const { firstname, lastname, password } = req.body;
 
@@ -47,9 +49,9 @@ export default class ProfileController {
         { new: true },
       );
 
-      return res.json({ mesage: Message.ProfileUpdated });
+      return createResponse(res, 201, true, Message.ProfileUpdated);
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      return createResponse(res, 500, true, error.message);
     }
   }
 
@@ -57,7 +59,7 @@ export default class ProfileController {
     req: Request | any,
     res: Response,
     next: NextFunction,
-  ): Promise<object> {
+  ): Promise<any> {
     try {
       const { email, verificationCode } = req.body;
 
@@ -73,27 +75,27 @@ export default class ProfileController {
           },
         );
         cache.del(email);
-        return res.status(201).json({
-          msg: 'Your new email has been confirmed and saved successfully.',
-        });
+
+        return createResponse(
+          res,
+          201,
+          true,
+          'Your new email has been confirmed and saved successfully.',
+        );
       } else {
-        return res.status(400).json({
-          error: 'Invalid verification code',
-          details:
-            'The verification code you entered is invalid or has expired. Please check the code and try again.',
-        });
+        return createResponse(res, 400, false, 'Invalid verification code');
       }
     } catch (error) {
-      return res.status(500).json({ error: error.message });
+      return createResponse(res, 500, false, error.message);
     }
   }
 
-  async delete(req: Request | any, res: Response, next: NextFunction) {
+  async delete(req: Request | any, res: Response, next: NextFunction): Promise<any> {
     try {
       await User.deleteOne({ _id: req.user.id });
-      return res.json({ message: Message.DeletedAccount });
+      return createResponse(res, 204, true, Message.DeletedAccount);
     } catch (error) {
-      next(error);
+      return createResponse(res, 500, false, error.message);
     }
   }
 }
