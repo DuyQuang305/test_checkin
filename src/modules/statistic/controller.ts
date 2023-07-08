@@ -36,21 +36,22 @@ export default class StatisticController {
     );
   }
 
-  async attendanceByDay(req: Request, res: Response): Promise<any> {
-    const dayOfWeek = req.query.dayOfWeek;
-    const attendances = await Attendance.find({ dayOfWeek })
-      .populate('room', 'name')
-      .populate('user', 'firstname lastname')
-      .lean();
+  // async attendanceByDay(req: Request, res: Response): Promise<any> {
+  //   const day: string = req.query.day;
+  //   const attendanceDay: Date = new Date(day)
+  //   const attendances = await Attendance.find({})
+  //     .populate('room', 'name')
+  //     .populate('user', 'firstname lastname')
+  //     .lean();
 
-    return createResponse(
-      res,
-      200,
-      true,
-      'Get Attendance History By Day Of Week successfully',
-      attendances,
-    );
-  }
+  //   return createResponse(
+  //     res,
+  //     200,
+  //     true,
+  //     'Get Attendance History By Day Of Week successfully',
+  //     attendances,
+  //   );
+  // }
 
   async lateArrivals(req: Request, res: Response): Promise<any> {
     const lateArrivals = await Attendance.find(

@@ -256,7 +256,12 @@ export default class AuthController {
 
           cache.del(email);
 
-          return createResponse(res, 201, true, 'Account verification successful');
+          return createResponse(
+            res,
+            201,
+            true,
+            'Account verification successful',
+          );
         } else {
           return createResponse(
             res,

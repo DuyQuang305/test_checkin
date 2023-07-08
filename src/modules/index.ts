@@ -4,6 +4,7 @@ import profileRouter from './profile/router';
 import attendanceRouter from './attendance/router';
 import statisticRouter from './statistic/router';
 import roomRouter from './room/router';
+import timeRouter from './time/router';
 
 export default class Module {
   protected app: any;
@@ -17,6 +18,7 @@ export default class Module {
     await this.app.use('/attendance', attendanceRouter);
     await this.app.use('/room', roomRouter);
     await this.app.use('/statistic', statisticRouter);
+    await this.app.use('/time', timeRouter);
     await this.app.use('/', homeRouter);
   }
 }

@@ -19,18 +19,18 @@ router.get(
 );
 
 // Xem lịch sử điểm danh theo ngày trong tuần
-router.get(
-  '/AttendanceByDay',
-  jwtGuard,
-  statisticController.attendanceByDay,
-);
+// router.get(
+//   '/attendanceByDay',
+//   jwtGuard,
+//   statisticController.attendanceByDay,
+// );
 
 router.get('/lateArrivals', jwtGuard, statisticController.lateArrivals);
 
 router.get('/leaveEarly', jwtGuard, statisticController.leaveEarly);
 
-router.get('/lateArrivalsByUser', jwtGuard, statisticController.lateArrivals);
+// router.get('/lateArrivalsByUser', jwtGuard, statisticController.lateArrivals);
 
-router.get('/leaveEarlyByUser', jwtGuard, statisticController.leaveEarly);
+// router.get('/leaveEarlyByUser', jwtGuard, statisticController.leaveEarly);
 
 export default router;

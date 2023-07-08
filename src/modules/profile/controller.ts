@@ -90,7 +90,11 @@ export default class ProfileController {
     }
   }
 
-  async delete(req: Request | any, res: Response, next: NextFunction): Promise<any> {
+  async delete(
+    req: Request | any,
+    res: Response,
+    next: NextFunction,
+  ): Promise<any> {
     try {
       await User.deleteOne({ _id: req.user.id });
       return createResponse(res, 204, true, Message.DeletedAccount);

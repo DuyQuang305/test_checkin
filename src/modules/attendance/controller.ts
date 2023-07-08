@@ -3,6 +3,7 @@ import createResponse from '../../common/function/createResponse';
 
 import { Attendance } from '../../models/attendance';
 import { Room } from '../../models/room';
+import { Time } from '../../models/time';
 
 export default class AttendanceController {
   async checkin(
@@ -17,6 +18,19 @@ export default class AttendanceController {
 
       const room = await Room.findById(roomId);
 
+      const isMember = room.members.some((member) => {
+        return (member = user);
+      });
+
+      if (!isMember) {
+        return createResponse(
+          res,
+          400,
+          false,
+          'Sorry, you are not a member of this class and are not allowed to check-in',
+        );
+      }
+
       if (clientIp !== room.allowed_ip) {
         return createResponse(
           res,
@@ -25,7 +39,7 @@ export default class AttendanceController {
           'Your IP address is not allowed to access this meeting room',
         );
       }
-      const now: Date = new Date()
+      const now: Date = new Date();
       const attendanceResult = await attendance();
 
       const existingAttendance = await Attendance.findOne({
@@ -37,7 +51,12 @@ export default class AttendanceController {
       });
 
       if (existingAttendance) {
-        return createResponse(res, 400, false, 'You have already checked in earlier');
+        return createResponse(
+          res,
+          400,
+          false,
+          'You have already checked in earlier',
+        );
       } else {
         const attendance = new Attendance({
           user,
@@ -45,14 +64,24 @@ export default class AttendanceController {
           checkIn: now,
         });
 
-        const time = room.time.find((time) => {
-          return (new Date(time.start_time)).toDateString() === (new Date(attendance.checkIn)).toDateString();
-        }) 
+        const schedule = await Time.find({ room: roomId });
+
+        const time = schedule.find((time) => {
+          return (
+            new Date(time.start_time).toDateString() ===
+            new Date(attendance.checkIn).toDateString()
+          );
+        });
 
         const startTime = time ? time.start_time : null;
 
         if (!startTime) {
-          return createResponse(res, 400, false, 'No attendance schedule today');
+          return createResponse(
+            res,
+            400,
+            false,
+            'No attendance schedule today',
+          );
         }
 
         const isLateArrival = attendance.checkIn > startTime;
@@ -61,9 +90,13 @@ export default class AttendanceController {
 
         await attendance.save();
 
-        return createResponse(res, 201, true, 'checkin successfully', attendance);
-
-        
+        return createResponse(
+          res,
+          201,
+          true,
+          'checkin successfully',
+          attendance,
+        );
       }
     } catch (err) {
       return createResponse(res, 500, false, err.message);
@@ -91,12 +124,15 @@ export default class AttendanceController {
         );
       }
 
-      const now: Date = new Date()
+      const now: Date = new Date();
       const attendanceResult = await attendance();
 
       const attendanceExists = await Attendance.findOne({
         user,
         room: roomId,
+        checkIn: {
+          $gte: attendanceResult.day,
+        },
       });
 
       if (!attendanceExists || !attendanceExists.checkIn) {
@@ -104,14 +140,24 @@ export default class AttendanceController {
       } else {
         attendanceExists.checkOut = now;
 
-        const time = room.time.find((time) => {
-          return (new Date(time.end_time)).toDateString() === (new Date(attendanceExists.checkOut)).toDateString();
-        }) 
+        const schedule = await Time.find({ room: roomId });
+
+        const time = schedule.find((time) => {
+          return (
+            new Date(time.end_time).toDateString() ===
+            new Date(attendanceExists.checkOut).toDateString()
+          );
+        });
 
         const endTime = time ? time.end_time : null;
 
         if (!endTime) {
-          return createResponse(res, 400, false, 'No attendance schedule today');
+          return createResponse(
+            res,
+            400,
+            false,
+            'No attendance schedule today',
+          );
         }
 
         const isLeaveEarly = attendanceExists.checkOut < endTime;
@@ -145,4 +191,3 @@ async function attendance(): Promise<{
 
   return attendance;
 }
-

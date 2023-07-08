@@ -14,8 +14,4 @@ router.post('/create', jwtGuard, roomController.createRoom);
 router.put('/inviteMember', jwtGuard, roomController.inviteMember);
 router.put('/addMember/:roomId', roomController.addMember);
 
-router.put('/addTime/:roomId', roomController.addTime);
-router.put('/changeTime/:roomId/:timeId', roomController.changeTime);
-router.delete('/changeTime/:roomId/:timeId', roomController.deleteTime);
-
 export default router;
