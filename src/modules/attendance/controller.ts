@@ -15,7 +15,7 @@ export default class AttendanceController {
       const { roomId } = req.params;
       const clientIp = req.ip;
       const user = req.user.id;
-
+      
       const room = await Room.findById(roomId);
 
       const isMember = room.members.some((member) => {

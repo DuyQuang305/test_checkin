@@ -14,9 +14,70 @@ import cache from '../../services/cache';
 import sendMail from '../../services/sendMail';
 
 export default class AuthController {
+/**
+ * @swagger
+ * /auth/register:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: "Create a new user"
+ *     description: "Create new user by email and password"
+ *     parameters:
+ *       - in: body
+ *         name: user
+ *         description: "The user to create."
+ *         schema:
+ *           type: object
+ *           required:
+ *             - email
+ *             - properties
+ *           properties:
+ *             email:
+ *               type: string
+ *             firstname:
+ *               type: string
+ *             lastname:
+ *               type: string
+ *             password: 
+ *               type: string
+ *     responses:
+ *       201:
+ *         description: "Create user successfully"
+ *         schema:
+ *           type: object
+ *           properties:
+ *             success:
+ *               type: boolean
+ *             message:
+ *               type: string
+ *       400:
+ *          description: "Create user failed"
+ *          schema:
+ *           type: object
+ *           properties:
+ *             success:
+ *               type: boolean
+ *             message:
+ *               type: string
+ *       500:
+ *         description: "Server internal error "
+ *         schema:
+ *           type: object
+ *           properties:
+ *             success:
+ *               type: boolean
+ *             message:
+ *               type: string
+ */
   async register(req: Request, res: Response) {
     try {
       const { firstname, lastname, email, password } = req.body;
+
+      const isExistsEmail = await User.findOne({email})
+
+      if (isExistsEmail) {
+        return createResponse(res, 400, false, 'Email is already in use')
+      }
 
       const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
 
@@ -29,7 +90,7 @@ export default class AuthController {
 
       return createResponse(res, 201, true, 'Created user successfully');
     } catch (error) {
-      return createResponse(res, 500, false, 'Dulicate Email!');
+      return createResponse(res, 500, false, error.message);
     }
   }
 

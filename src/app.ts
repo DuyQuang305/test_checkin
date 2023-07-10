@@ -7,7 +7,8 @@ import passport from 'passport';
 import Module from './modules';
 import JWTStrategy from './services/jwtStrategy';
 import connect from './common/database';
-import error from './middlewares/error';
+
+import swaggerDocs from '../swagger'
 
 dotenv.config();
 const app = express();
@@ -42,9 +43,10 @@ initModule.main();
 JWTStrategy();
 app.use(passport.initialize());
 
-// Use middleware error handler
-app.use(error);
+// Swagger docs
+
+app.use('/docs', swaggerDocs);
 
 app.listen(parseInt(process.env.PORT) || 3000, () => {
-  console.log(`Server listening on port ${process.env.PORT || 3000}`);
+  console.log(`Server listening on port http://localhost:${process.env.PORT || 3000}`);
 });

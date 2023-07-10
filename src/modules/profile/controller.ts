@@ -34,6 +34,7 @@ export default class ProfileController {
       } else if (req.file) {
         removeExistsFile(user.avatar);
         avatarUser = req.file.path;
+        user.avatar = avatarUser;
       }
 
       const updatedUser = await User.findOneAndUpdate(

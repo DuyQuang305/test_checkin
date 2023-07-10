@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 
 import createResponse from '../../common/function/createResponse';
 
+import TimeInterface from '../../common/interface/time';
+
 import { User } from '../../models/user';
 import { Time } from '../../models/time';
 
@@ -13,7 +15,7 @@ export default class TimeController {
       const { start_time, end_time } = req.body;
       const owner = req.user.id;
 
-      const isExistsTime = await Time.findById(timeId)
+      const isExistsTime: TimeInterface = await Time.findById(timeId)
        .populate({
         path: 'room',
         select: 'owner',
