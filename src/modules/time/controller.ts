@@ -23,7 +23,9 @@ export default class TimeController {
           return createResponse(res, 400, false, 'Time is not found');
       }
     
-      const roomOwner = isExistsTime?.room?.owner?.toString();
+      console.log(isExistsTime);
+      
+      const roomOwner = isExistsTime?.room?.owner.toString();
       
       if (roomOwner != owner) {
         return createResponse(

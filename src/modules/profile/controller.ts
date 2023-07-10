@@ -51,7 +51,7 @@ export default class ProfileController {
 
       return createResponse(res, 201, true, Message.ProfileUpdated);
     } catch (error) {
-      return createResponse(res, 500, true, error.message);
+      return createResponse(res, 500, false, error.message);
     }
   }
 

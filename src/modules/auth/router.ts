@@ -14,5 +14,6 @@ router.post('/login', Validation(LoginSchema), authController.login);
 router.post('/refresh', authController.refreshToken);
 router.post('/sendVerificationCode', authController.sendConfirmationMessage);
 router.get('/verifyUser/:email', authController.verifyUser);
+router.put('/resetPassword/:email', authController.resetPassword);
 
 export default router;

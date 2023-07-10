@@ -5,7 +5,7 @@ export default function createResponse(
   statusCode: number,
   success: boolean,
   message: string,
-  data?: object | number,
+  data?: object | number | string,
 ) {
   return res.status(statusCode).json({ statusCode, success, message, data });
 }

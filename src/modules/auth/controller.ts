@@ -261,6 +261,7 @@ export default class AuthController {
             201,
             true,
             'Account verification successful',
+            email
           );
         } else {
           return createResponse(
@@ -300,10 +301,42 @@ export default class AuthController {
       }
 
       const token = await signToken(res, user.id, user.email);
-      return token;
+      return token
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<object> {
+    try {
+      const {email} = req.params
+      const {password} = req.body 
+
+      if (!password) {
+        return createResponse(res, 400, false, 'Please enter your password')
+      }
+      
+      const user = await User.findOne({email})
+
+      if (!user) {
+        return createResponse(res, 400, false, 'User not found')
+      }
+
+      try {
+        const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS)
+        user.password = await hashedPassword
+        await user.save()
+
+      } catch(error) {
+        return createResponse(res, 400, false, error.message)
+      }
+      
+      return createResponse(res, 201, true, 'Password update successfully')
+
+    } catch(error) {
+      return createResponse(res, 500, false, error.message)
+    }
+    
   }
 
   async refreshToken(req: Request, res: Response) {
@@ -360,7 +393,7 @@ export async function signToken(
       },
     );
   }
-  return createResponse(res, 201, true, 'Login successfully', {
+  return createResponse(res, 200, true, 'Login successfully', {
     access_token,
     refresh_token,
   });
