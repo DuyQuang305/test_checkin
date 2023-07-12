@@ -5,22 +5,32 @@ const router = express.Router();
 
 const options = {
     swaggerDefinition: {
+      supportedSubmitMethods: [], 
+      securityDefinitions: {
+        bearerAuth: {
+          type: 'apiKey',
+          name: 'Authorization',
+          in: 'header',
+          description: 'Bearer token for authentication',
+        }
+      },
       info: {
         title: 'REST - Swagger',
         version: '1.0.0',
         description: 'REST API with Swagger doc',
       },
-      tags: [
-        {
-          name: 'Auth',
-          description: 'Auth API',
-        },
-      ],
       schemes: ['http'],
       host: 'localhost:8000',
       basePath: '/',
     },
-    apis: ['./src/modules/auth/controller.ts'],
+    apis: [
+      './src/modules/auth/controller.ts',
+      './src/modules/profile/controller.ts',
+      './src/modules/room/controller.ts',
+      './src/modules/attendance/controller.ts',
+      './src/modules/time/controller.ts',
+      './src/modules/statistic/controller.ts',
+    ],
   };
   
   

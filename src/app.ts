@@ -8,7 +8,7 @@ import Module from './modules';
 import JWTStrategy from './services/jwtStrategy';
 import connect from './common/database';
 
-import swaggerDocs from '../swagger'
+import swaggerDocs from '../swagger';
 
 dotenv.config();
 const app = express();
@@ -48,5 +48,7 @@ app.use(passport.initialize());
 app.use('/docs', swaggerDocs);
 
 app.listen(parseInt(process.env.PORT) || 3000, () => {
-  console.log(`Server listening on port http://localhost:${process.env.PORT || 3000}`);
+  console.log(
+    `Server listening on port http://localhost:${process.env.PORT || 3000}`,
+  );
 });

@@ -9,28 +9,24 @@ const router = express.Router();
 const statisticController = new StatisticController();
 
 // Xem lịch sử điểm danh từ trước đến nay
-router.get('/checkinHistory', jwtGuard, statisticController.attendanceHistory);
+router.get('/history/me', jwtGuard, statisticController.myAttendanceHistory);
+
+router.get('/find-by-user/:id', jwtGuard, statisticController.AttendanceHistoryPerson);
 
 // Xem lịch sử điểm danh theo phòng
-router.get(
-  '/attendanceByRoom/:room',
-  jwtGuard,
-  statisticController.attendanceByRoom,
-);
-
-// Xem lịch sử điểm danh theo ngày trong tuần
 // router.get(
-//   '/attendanceByDay',
+//   '/attendanceByRoom/:room',
 //   jwtGuard,
-//   statisticController.attendanceByDay,
+//   statisticController.attendanceByRoom,
 // );
 
-router.get('/lateArrivals', jwtGuard, statisticController.lateArrivals);
+// // Xem lịch sử điểm danh theo ngày trong tuần
+// // router.get(
+// //   '/attendanceByDay',
+// //   jwtGuard,
+// //   statisticController.attendanceByDay,
+// // );
 
-router.get('/leaveEarly', jwtGuard, statisticController.leaveEarly);
 
-// router.get('/lateArrivalsByUser', jwtGuard, statisticController.lateArrivals);
-
-// router.get('/leaveEarlyByUser', jwtGuard, statisticController.leaveEarly);
 
 export default router;

@@ -5,9 +5,89 @@ import createResponse from '../../common/function/createResponse';
 import { Attendance } from '../../models/attendance';
 
 export default class StatisticController {
-  async attendanceHistory(req: Request, res: Response): Promise<any> {
-    const user = req.user;
-    const attendances = await Attendance.find({ user })
+
+  /**
+   * @swagger
+   * /room/{roomId}:
+   *   get:
+   *     tags:
+   *       - Statistic
+   *     summary: "Get history attendance of room"
+   *     description: "Get infomation room"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         description: "The roomId of the room to get infomation room"
+   *         schema:
+   *           type: string
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get Successfully
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get infomation room failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
+   *             data:
+   *              type: object
+   */
+
+  async myAttendanceHistory(req: Request | any, res: Response): Promise<any> {
+    const user = req.user.id;
+    const attendances = await Attendance.findOne({user})
       .populate('room', 'name')
       .populate('user', 'firstname lastname')
       .lean();
@@ -15,7 +95,21 @@ export default class StatisticController {
       res,
       200,
       true,
-      'Get Attendance History successfully',
+      'Get Your Attendance History successfully',
+      attendances,
+    );
+  }
+
+  async AttendanceHistoryPerson(req: Request | any, res: Response): Promise<any> {
+    const {id} = req.params;
+    const attendances = await Attendance.findOne({user: id})
+      .populate('user', 'firstname lastname')
+      .lean();
+    return createResponse(
+      res,
+      200,
+      true,
+      'Get Attendance History Of a Person successfully',
       attendances,
     );
   }
@@ -33,85 +127,6 @@ export default class StatisticController {
       true,
       'Get Attendance History By Room successfully',
       attendances,
-    );
-  }
-
-  // async attendanceByDay(req: Request, res: Response): Promise<any> {
-  //   const day: string = req.query.day;
-  //   const attendanceDay: Date = new Date(day)
-  //   const attendances = await Attendance.find({})
-  //     .populate('room', 'name')
-  //     .populate('user', 'firstname lastname')
-  //     .lean();
-
-  //   return createResponse(
-  //     res,
-  //     200,
-  //     true,
-  //     'Get Attendance History By Day Of Week successfully',
-  //     attendances,
-  //   );
-  // }
-
-  async lateArrivals(req: Request, res: Response): Promise<any> {
-    const lateArrivals = await Attendance.find(
-      { isLateArrival: true },
-      { user: req.user },
-    ).count();
-
-    return createResponse(
-      res,
-      200,
-      true,
-      'The number of late arrivals is:',
-      lateArrivals,
-    );
-  }
-
-  async leaveEarly(req: Request, res: Response): Promise<any> {
-    const leaveEarly = await Attendance.find(
-      { isLeaveEarly: true },
-      { user: req.user },
-    ).count();
-
-    return createResponse(
-      res,
-      200,
-      true,
-      'The number of early days off work is:',
-      leaveEarly,
-    );
-  }
-
-  async lateArrivalsByUser(req: Request, res: Response): Promise<any> {
-    const user = req.query.user;
-    const lateArrivals = await Attendance.find(
-      { isLateArrival: true },
-      { user },
-    ).count();
-
-    return createResponse(
-      res,
-      200,
-      true,
-      'The number of late arrivals is:',
-      lateArrivals,
-    );
-  }
-
-  async leaveEarlyByUser(req: Request, res: Response): Promise<any> {
-    const user = req.query.user;
-    const leaveEarly = await Attendance.find(
-      { isLeaveEarly: true },
-      { user },
-    ).count();
-
-    return createResponse(
-      res,
-      200,
-      true,
-      'The number of early days off work is:',
-      leaveEarly,
     );
   }
 }

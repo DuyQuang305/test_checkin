@@ -14,69 +14,80 @@ import cache from '../../services/cache';
 import sendMail from '../../services/sendMail';
 
 export default class AuthController {
-/**
- * @swagger
- * /auth/register:
- *   post:
- *     tags:
- *       - Auth
- *     summary: "Create a new user"
- *     description: "Create new user by email and password"
- *     parameters:
- *       - in: body
- *         name: user
- *         description: "The user to create."
- *         schema:
- *           type: object
- *           required:
- *             - email
- *             - properties
- *           properties:
- *             email:
- *               type: string
- *             firstname:
- *               type: string
- *             lastname:
- *               type: string
- *             password: 
- *               type: string
- *     responses:
- *       201:
- *         description: "Create user successfully"
- *         schema:
- *           type: object
- *           properties:
- *             success:
- *               type: boolean
- *             message:
- *               type: string
- *       400:
- *          description: "Create user failed"
- *          schema:
- *           type: object
- *           properties:
- *             success:
- *               type: boolean
- *             message:
- *               type: string
- *       500:
- *         description: "Server internal error "
- *         schema:
- *           type: object
- *           properties:
- *             success:
- *               type: boolean
- *             message:
- *               type: string
- */
+  /**
+   * @swagger
+   * /auth/register:
+   *   post:
+   *     tags:
+   *       - Auth
+   *     summary: "Create a new user"
+   *     description: "Create new user by email and password"
+   *     parameters:
+   *       - in: body
+   *         name: user
+   *         description: "The user to create."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - email
+   *             - properties
+   *           properties:
+   *             email:
+   *               type: string
+   *             firstname:
+   *               type: string
+   *             lastname:
+   *               type: string
+   *             password:
+   *               type: string
+   *     responses:
+   *       201:
+   *         description: "Create user successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "Create user failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 400
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 500
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   */
   async register(req: Request, res: Response) {
     try {
       const { firstname, lastname, email, password } = req.body;
 
-      const isExistsEmail = await User.findOne({email})
+      const isExistsEmail = await User.findOne({ email });
 
       if (isExistsEmail) {
-        return createResponse(res, 400, false, 'Email is already in use')
+        return createResponse(res, 400, false, 'Email is already in use');
       }
 
       const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
@@ -93,7 +104,66 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
-
+  /**
+   * @swagger
+   * /auth/sendVerificationCode:
+   *   post:
+   *     tags:
+   *       - Auth
+   *     summary: "Send email"
+   *     description: "Send email to user"
+   *     parameters:
+   *       - in: body
+   *         name: email
+   *         description: "The email to send."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - email
+   *             - properties
+   *           properties:
+   *             email:
+   *               type: string
+   *     responses:
+   *       200:
+   *         description: "Send email successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "Send email failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 400
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 500
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   */
   async sendConfirmationMessage(req: Request, res: Response) {
     try {
       const { email } = req.body;
@@ -296,11 +366,76 @@ export default class AuthController {
 
       sendMail(mailOptions);
 
-      return createResponse(res, 201, true, 'Sent message successfully');
+      return createResponse(res, 200, true, 'Sent message successfully');
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
   }
+
+  /**
+   * @swagger
+   * /auth/verifyUser/{email}:
+   *   get:
+   *     tags:
+   *       - Auth
+   *     summary: "Verify User"
+   *     description: "Verify your account using code"
+   *     parameters:
+   *       - in: body
+   *         name: verificationCode
+   *         description: "The code to verify."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - verificationCode
+   *           properties:
+   *             verificationCode:
+   *               type: string
+   *       - in: path
+   *         name: email
+   *         description: "The email of the user to verify user"
+   *         schema:
+   *           type: string
+   *     responses:
+   *       201:
+   *         description: "Verify user successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "Verify user failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
 
   async verifyUser(req: Request, res: Response) {
     try {
@@ -322,7 +457,6 @@ export default class AuthController {
             201,
             true,
             'Account verification successful',
-            email
           );
         } else {
           return createResponse(
@@ -337,6 +471,73 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
+
+  /**
+   * @swagger
+   * /auth/login:
+   *   post:
+   *     tags:
+   *       - Auth
+   *     summary: "Log in to your account"
+   *     description: "Log in to your account using your email and password"
+   *     parameters:
+   *       - in: body
+   *         name: user
+   *         description: "The user to Login."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - email
+   *             - password
+   *             - properties
+   *           properties:
+   *             email:
+   *               type: string
+   *             password:
+   *               type: string
+   *     responses:
+   *       200:
+   *         description: "Log in successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *             token:
+   *               type: string
+   *               description: JWT token for authentication
+   *       400:
+   *          description: "Log in account failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
 
   async login(req: Request, res: Response) {
     try {
@@ -362,42 +563,104 @@ export default class AuthController {
       }
 
       const token = await signToken(res, user.id, user.email);
-      return token
+      return token;
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
   }
 
+  /**
+   * @swagger
+   * /auth/resetPassword/{email}:
+   *   put:
+   *     tags:
+   *       - Auth
+   *     summary: "Reset your password"
+   *     description: "Reset your password"
+   *     parameters:
+   *       - in: body
+   *         name: user
+   *         description: "The user to update."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - password
+   *           properties:
+   *             password:
+   *               type: string
+   *       - in: path
+   *         name: email
+   *         description: "The email of the user to change Password"
+   *         schema:
+   *           type: string
+   *     responses:
+   *       201:
+   *         description: "Change password successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "Change password failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
+
   async resetPassword(req: Request, res: Response): Promise<object> {
     try {
-      const {email} = req.params
-      const {password} = req.body 
+      const { email } = req.params;
+      const { password } = req.body;
 
       if (!password) {
-        return createResponse(res, 400, false, 'Please enter your password')
+        return createResponse(res, 400, false, 'Please enter your password');
       }
-      
-      const user = await User.findOne({email})
+
+      const user = await User.findOne({ email });
 
       if (!user) {
-        return createResponse(res, 400, false, 'User not found')
+        return createResponse(res, 400, false, 'User not found');
       }
 
       try {
-        const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS)
-        user.password = await hashedPassword
-        await user.save()
-
-      } catch(error) {
-        return createResponse(res, 400, false, error.message)
+        const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
+        user.password = await hashedPassword;
+        await user.save();
+      } catch (error) {
+        return createResponse(res, 400, false, error.message);
       }
-      
-      return createResponse(res, 201, true, 'Password update successfully')
 
-    } catch(error) {
-      return createResponse(res, 500, false, error.message)
+      return createResponse(res, 201, true, 'Password update successfully');
+    } catch (error) {
+      return createResponse(res, 500, false, error.message);
     }
-    
   }
 
   async refreshToken(req: Request, res: Response) {

@@ -6,6 +6,101 @@ import { Room } from '../../models/room';
 import { Time } from '../../models/time';
 
 export default class AttendanceController {
+
+  /**
+   * @swagger
+   * /attendance/checkin/{roomId}:
+   *   post:
+   *     tags:
+   *       - Attendance
+   *     summary: "Checkin"
+   *     description: "Check in when user arrive"
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         schema: 
+   *           type: string
+   *         require: true
+   *         description: Room to check in
+   *       - in: header
+   *         name: X-Forwarded-For
+   *         require: true
+   *         schema: 
+   *           type: string 
+   *         description: "The client IP address"
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *               example: "Check in successfully"
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 401
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Unauthorization"
+   *       403:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 403
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Forbidden"
+   *       500:
+   *         description: "Server internal error"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
   async checkin(
     req: Request | any,
     res: Response,
@@ -15,7 +110,7 @@ export default class AttendanceController {
       const { roomId } = req.params;
       const clientIp = req.ip;
       const user = req.user.id;
-      
+
       const room = await Room.findById(roomId);
 
       const isMember = room.members.some((member) => {
@@ -25,7 +120,7 @@ export default class AttendanceController {
       if (!isMember) {
         return createResponse(
           res,
-          400,
+          403,
           false,
           'Sorry, you are not a member of this class and are not allowed to check-in',
         );
@@ -102,6 +197,86 @@ export default class AttendanceController {
       return createResponse(res, 500, false, err.message);
     }
   }
+
+  /**
+   * @swagger
+   * /attendance/checkout/{roomId}:
+   *   post:
+   *     tags:
+   *       - Attendance
+   *     summary: "Checkout"
+   *     description: "Check out when user go home"
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         schema: 
+   *           type: string
+   *         require: true
+   *         description: Room to check in
+   *       - in: header
+   *         name: X-Forwarded-For
+   *         require: true
+   *         schema: 
+   *           type: string 
+   *         description: "The client IP address"
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *               example: "Checkout successfully"
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 401
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *             message:
+   *              type: string
+   */
 
   async checkout(
     req: Request | any,

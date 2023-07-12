@@ -5,4 +5,16 @@ export enum Message {
   ProfileUpdated = 'Your information has been updated',
   DeletedAccount = 'Account deleted successfully',
   NotAuthorizedAccount = 'You are not authorized to perform this action.',
+
+  // Auth
+  
+  //Home
+  
+  // Profile
+
+  // Room
+
+  // Time
+
+  // Statistic
 }

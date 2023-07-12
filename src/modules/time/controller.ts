@@ -1,34 +1,156 @@
 import { Request, Response } from 'express';
 
 import createResponse from '../../common/function/createResponse';
-
+import checkTime from '../../common/function/checkTime';
 import TimeInterface from '../../common/interface/time';
 
 import { User } from '../../models/user';
 import { Time } from '../../models/time';
+import { Room } from '../../models/room';
 
 export default class TimeController {
-  // check time id, check owner
+  async addTime (req: Request | any, res: Response): Promise<any>{
+    try {
+      const {roomId} = req.params
+      const {time} = req.body
+      const user = req.user.id
+      
+      const room = await Room.findById(roomId)
+
+      const owner = room.owner.toString();
+
+     if (user !== owner) {
+      return createResponse(res, 403, false, 'To create a room, the user must be the owner of the room.')
+     }
+
+      const errorMessages = await checkTime(time);
+      if (errorMessages.length > 0) {
+        return createResponse(res, 400, false, errorMessages[0]);
+      }
+  
+      const timeWithRoomIds = time.map((t) => ({ ...t, room: roomId }));
+  
+      try {
+        await Time.insertMany([...timeWithRoomIds]);
+      } catch(error) {
+        return createResponse(res, 400, false, error.message)
+      }
+
+      return createResponse(res, 201, true, 'Add time successfully')
+    } catch (error) {
+      return createResponse(res, 500, false, error.message)
+    }
+   
+  }
+
+
+  /**
+   * @swagger
+   * /time/{timeId}:
+   *   patch:
+   *     tags:
+   *       - Time
+   *     summary: "Modify the start or end time of the room"
+   *     description: "Modify the start or end time of the room by start time and end time"
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: body
+   *         name: time
+   *         description: time to update
+   *         schema:
+   *           type: object
+   *           propertise:
+   *             - start_time:
+   *                 type: date
+   *                 description: New start_time
+   *             - end_time:
+   *                 type: date
+   *                 description: New end_time
+   *           example:
+   *             start_time: 2023-07-08T01:00:00.00Z
+   *             end_time: 2023-07-08T03:30:00.00Z
+   *       - in: path
+   *         name: timeId
+   *         required: true
+   *         schema:
+   *           type: string     
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 401
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *             data:
+   *              type: object
+   */
+
   async changeTime(req: Request | any, res) {
     try {
       const { timeId } = req.params;
       const { start_time, end_time } = req.body;
       const owner = req.user.id;
 
-      const isExistsTime: TimeInterface = await Time.findById(timeId)
-       .populate({
+      const isExistsTime: TimeInterface = await Time.findById(timeId).populate({
         path: 'room',
         select: 'owner',
       });
-      
+
       if (!isExistsTime) {
-          return createResponse(res, 400, false, 'Time is not found');
+        return createResponse(res, 400, false, 'Time is not found');
       }
-    
-      console.log(isExistsTime);
-      
+
       const roomOwner = isExistsTime?.room?.owner.toString();
-      
+
       if (roomOwner != owner) {
         return createResponse(
           res,

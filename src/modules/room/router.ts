@@ -11,7 +11,7 @@ const roomController = new RoomController();
 router.get('/:roomId', jwtGuard, roomController.showRoom);
 router.post('/create', jwtGuard, roomController.createRoom);
 
-router.put('/inviteMember', jwtGuard, roomController.inviteMember);
+router.post('/inviteMember', jwtGuard, roomController.inviteMember);
 router.put('/addMember/:roomId', roomController.addMember);
 
 export default router;

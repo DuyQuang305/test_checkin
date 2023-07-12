@@ -27,6 +27,5 @@ router.patch(
   profileController.editEmail,
 );
 router.delete('/', jwtGuard, profileController.delete);
-router.get('/', jwtGuard, profileController.profile);
 
 export default router;

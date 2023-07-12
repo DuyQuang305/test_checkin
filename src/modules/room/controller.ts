@@ -13,12 +13,118 @@ import checkTime from '../../common/function/checkTime';
 require('dotenv').config;
 
 export default class Controller {
+  /**
+   * @swagger
+   * /room/{roomId}:
+   *   get:
+   *     tags:
+   *       - Room
+   *     summary: "Get infomation room"
+   *     description: "Get infomation room"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: roomId
+   *         description: "The roomId of the room to get infomation room"
+   *         schema:
+   *           type: string
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get infomation room successfully
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get infomation room failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       403:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 403
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "To view information about the room, the user must be either the owner of the room or a member of the room"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
+   *             data:
+   *              type: object
+   */
+
   async showRoom(req: Request | any, res: Response, next: NextFunction) {
     try {
       const { roomId } = req.params;
+      const user = req.user.id
+      
       const room = await Room.findById(roomId)
         .populate('owner', 'firstname lastname avatar')
         .populate('members', 'firstname lastname avatar');
+      
+      const members = room.members
+      const owner = room.owner
+      const isMember = members.some(member => {
+        return member._id = user
+      })
+      
+      if (!isMember || (user != owner) ) {
+        return createResponse(res, 403, false, 'To view information about the room, the user must be either the owner of the room or a member of the room.')
+      }
+
       return createResponse(
         res,
         200,
@@ -31,6 +137,87 @@ export default class Controller {
     }
   }
 
+/**
+   * @swagger
+   * /room/create:
+   *   post:
+   *     tags:
+   *       - Room
+   *     summary: "Create a new Room"
+   *     description: "Create new room"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: body
+   *         name: room
+   *         description: "The room to create."
+   *         schema:
+   *           type: object
+   *           properties:
+   *             name:
+   *               type: string
+   *             time:
+   *               type: array
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: "Create room successfully"
+   *             data: 
+   *               type: array
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 400
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "invalid time"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 401
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 500
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Server internal error "
+   */
   async createRoom(
     req: Request | any,
     res: Response,
@@ -65,7 +252,88 @@ export default class Controller {
     }
   }
 
-  //  mời người dùng bằng cách nhập mail
+/**
+   * @swagger
+   * /room/inviteMember:
+   *   post:
+   *     tags:
+   *       - Room
+   *     summary: "Invite member to room Room"
+   *     description: "Invite member to room Room by send Email"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: body
+   *         name: room
+   *         description: "Invite member"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             emails:
+   *               type: array
+   *           example: ["abc@gmail.com", "bce@gmail.com"]
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: "Send Email successfully"
+   *             data: 
+   *               type: array
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 400
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "invalid email"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 401
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 500
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Server internal error "
+   */
+
+  //  gửi email cho người dùng
   async inviteMember(req: Request | any, res: Response, next: NextFunction) {
     try {
       const { roomId, emails } = req.body;
@@ -86,6 +354,87 @@ export default class Controller {
       return createResponse(res, 500, false, error.message);
     }
   }
+/**
+   * @swagger
+   * /room/addMember/{roomId}:
+   *   put:
+   *     tags:
+   *       - Room
+   *     summary: "Add member to room Room"
+   *     description: "Add member to room when user enter email"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: body
+   *         name: email
+   *         description: "email to add member"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             email:
+   *               type: string
+   *               example: "bce@gmail.com"
+   *       - in: path
+   *         name: roomId
+   *         description: "add member to room"    
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: "Add member to room successfully"
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 400
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "invalid email"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 401
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 500
+   *             success:
+   *               type: boolean
+   *               example: false
+   *             message:
+   *               type: string
+   *               example: "Server internal error "
+   */
 
   //  mời người dùng bằng cách nhập mail
   async addMember(req: Request | any, res: Response, next: NextFunction) {
@@ -128,37 +477,3 @@ export default class Controller {
   }
 }
 
-// export const checkTime = async (time) => {
-//   try {
-//     const errors = { startTimeError: false, overlapError: false };
-
-//     for (const t of time) {
-//       if (t.start_time >= t.end_time) {
-//         errors.startTimeError = true;
-//       } else {
-//         const overlappingTime = await Time.findOne({
-//           $or: [
-//             { start_time: { $lte: t.start_time }, end_time: { $gte: t.end_time } },
-//             { start_time: { $lte: t.start_time }, end_time: { $gte: t.end_time } },
-//             { start_time: { $gte: t.start_time }, end_time: { $lte: t.end_time } }
-//           ]
-//         }).exec();
-
-//         if (overlappingTime) {
-//           errors.overlapError = true;
-//         }
-//       }
-//     }
-
-//     const errorMessages = [];
-//     if (errors.startTimeError) {
-//       errorMessages.push('The start time must be less than the end time');
-//     }
-//     if (errors.overlapError) {
-//       errorMessages.push('The time period you specified overlaps with an existing time period. Please enter a different time period.');
-//     }
-//     return errorMessages;
-//   } catch (error) {
-//     throw new Error(error.message);
-//   }
-// }
