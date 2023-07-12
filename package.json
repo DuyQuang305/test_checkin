@@ -2,7 +2,7 @@
   "name": "schedule",
   "version": "1.0.0",
   "main": "app.ts",
-  "author": "Khanh Nguyen",
+  "author": "Duy Quang",
   "license": "MIT",
   "repository": "https://github.com/DuyQuang305/test_chekin",
   "dependencies": {
@@ -49,6 +49,7 @@
     "nodemon": "^2.0.22",
     "prettier": "^2.8.8",
     "regenerator-runtime": "^0.13.11",
+    "swc": "^1.0.11",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.3"
   }
