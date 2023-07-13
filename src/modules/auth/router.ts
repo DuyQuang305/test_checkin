@@ -4,7 +4,7 @@ import AuthController from './controller';
 import LoginSchema from './validations/login';
 import registerSchema from './validations/register';
 
-import Validation from '../../middlewares/Validation';
+import Validation from '../../middlewares/validation';
 
 const router = express.Router();
 const authController = new AuthController();
