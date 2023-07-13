@@ -1,7 +1,7 @@
 {
   "name": "schedule",
   "version": "1.0.0",
-  "main": "app.ts",
+  "main": "src/app.ts",
   "author": "Duy Quang",
   "license": "MIT",
   "repository": "https://github.com/DuyQuang305/test_chekin",
