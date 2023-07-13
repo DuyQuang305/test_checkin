@@ -1,2 +1,5 @@
+build:
+  env:
+    - NODE_VERSION=18
 docker:
   image: rendertron/rendertron:latest
