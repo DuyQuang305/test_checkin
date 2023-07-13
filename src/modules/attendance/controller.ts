@@ -301,7 +301,10 @@ export default class AttendanceController {
 
       const now: Date = new Date();
       const attendanceResult = await attendance();
-
+      console.log(user);
+      console.log(roomId);
+      
+      
       const attendanceExists = await Attendance.findOne({
         user,
         room: roomId,
@@ -309,6 +312,8 @@ export default class AttendanceController {
           $gte: attendanceResult.day,
         },
       });
+      console.log(attendanceExists);
+      
 
       if (!attendanceExists || !attendanceExists.checkIn) {
         return createResponse(res, 400, false, 'You havent checked in yet');

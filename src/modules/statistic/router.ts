@@ -8,25 +8,16 @@ import roleGuard from '../../middlewares/roleGuard';
 const router = express.Router();
 const statisticController = new StatisticController();
 
-// Xem lịch sử điểm danh từ trước đến nay
-router.get('/history/me', jwtGuard, statisticController.myAttendanceHistory);
+router.get('/history', jwtGuard, statisticController.attendanceHistory)
 
-router.get('/find-by-user/:id', jwtGuard, statisticController.AttendanceHistoryPerson);
+router.get('/history-me', jwtGuard, statisticController.myAttendanceHistory);
 
-// Xem lịch sử điểm danh theo phòng
-// router.get(
-//   '/attendanceByRoom/:room',
-//   jwtGuard,
-//   statisticController.attendanceByRoom,
-// );
+router.get('/find-by-user/:userId', jwtGuard, statisticController.AttendanceHistoryPerson);
 
-// // Xem lịch sử điểm danh theo ngày trong tuần
-// // router.get(
-// //   '/attendanceByDay',
-// //   jwtGuard,
-// //   statisticController.attendanceByDay,
-// // );
-
-
+router.get(
+  '/attendanceByRoom/:roomId',
+  jwtGuard,
+  statisticController.attendanceByRoom,
+);
 
 export default router;

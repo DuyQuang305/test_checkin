@@ -5,32 +5,34 @@ import createResponse from '../../common/function/createResponse';
 import { Attendance } from '../../models/attendance';
 
 export default class StatisticController {
-
   /**
    * @swagger
-   * /room/{roomId}:
+   * /statistic/history:
    *   get:
    *     tags:
    *       - Statistic
-   *     summary: "Get history attendance of room"
-   *     description: "Get infomation room"
+   *     summary: "Get attendance history and paginate page"
+   *     description: "Get attendance history and paginate page"
    *     security: 
    *       - bearerAuth: []
    *     parameters:
-   *       - in: path
-   *         name: roomId
-   *         description: "The roomId of the room to get infomation room"
+   *       - in: query
+   *         name: currentPage
+   *         schema: 
+   *           type: integer
+   *       - in: query
+   *         name: limit
    *         schema:
-   *           type: string
+   *           type: integer
    *     responses:
-   *       201:
+   *       200:
    *         description: "Successfully"
    *         schema:
    *           type: object
    *           properties:
    *             statusCode:
    *               type: number
-   *               example: 201
+   *               example: 200
    *             success:
    *               type: boolean
    *               example: true
@@ -52,7 +54,7 @@ export default class StatisticController {
    *                example: false
    *              message:
    *                type: string
-   *                example: "Get infomation room failed"
+   *                example: "Get history attendance failed"
    *       401:
    *          description: "Failed"
    *          schema:
@@ -60,7 +62,7 @@ export default class StatisticController {
    *            properties:
    *              statusCode:
    *                type: number
-   *                example: 400
+   *                example: 401
    *              success:
    *                type: boolean
    *                example: false
@@ -81,13 +83,105 @@ export default class StatisticController {
    *             message:
    *              type: string
    *              example: "Server internal error"
+   */
+
+  async attendanceHistory(req: Request | any, res: Response) {
+    const {limit, currentPage} = req.query
+
+    const attendanceCount = await Attendance.countDocuments({})
+    const pageLimit = parseInt(limit) || 5
+    const skipCount = pageLimit * ((currentPage <= 0 ? 1 : currentPage) - 1);
+
+    const pageCount = Math.ceil(attendanceCount / pageLimit);
+    const attendance = await Attendance.find({})
+                                       .populate('user', 'firstname lastname')
+                                       .populate('room', 'name')
+                                       .skip(skipCount)
+                                       .limit(limit)
+                                       .lean();
+    
+    if (!attendance) {
+      return createResponse(res, 400, false, 'attendance not found');
+    }
+
+    return createResponse(res, 200, true, 'get attendance history successfully', attendance, pageCount)
+                                      
+  } 
+
+  /**
+   * @swagger
+   * /statistic/history-me:
+   *   get:
+   *     tags:
+   *       - Statistic
+   *     summary: "Get your attendance history"
+   *     description: "Get your attendance history"
+   *     security: 
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get Successfully
    *             data:
-   *              type: object
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get history attendance failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 401
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
    */
 
   async myAttendanceHistory(req: Request | any, res: Response): Promise<any> {
     const user = req.user.id;
-    const attendances = await Attendance.findOne({user})
+    const attendances = await Attendance.find({user})
       .populate('room', 'name')
       .populate('user', 'firstname lastname')
       .lean();
@@ -100,9 +194,80 @@ export default class StatisticController {
     );
   }
 
+  /**
+   * @swagger
+   * /statistic/find-by-user/{userId}:
+   *   get:
+   *     tags:
+   *       - Statistic
+   *     summary: "Get infomation attendance history of a person"
+   *     description: "Get infomation attendance history of a person"
+   *     security: 
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get Successfully
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get history attendance failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 401
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
+   */
+
   async AttendanceHistoryPerson(req: Request | any, res: Response): Promise<any> {
     const {id} = req.params;
-    const attendances = await Attendance.findOne({user: id})
+    const attendances = await Attendance.find({user: id})
       .populate('user', 'firstname lastname')
       .lean();
     return createResponse(
@@ -114,9 +279,79 @@ export default class StatisticController {
     );
   }
 
+  /**
+   * @swagger
+   * /statistic/attendanceByRoom/{roomId}:
+   *   get:
+   *     tags:
+   *       - Statistic
+   *     summary: "Get infomation attendance history by room"
+   *     description: "Get infomation attendance history by room"
+   *     security: 
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get Successfully
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get history attendance failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 401
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
+   */
   async attendanceByRoom(req: Request, res: Response): Promise<any> {
-    const { room } = req.params;
-    const attendances = await Attendance.find({ room })
+    const { roomId } = req.params;
+    const attendances = await Attendance.find({room: roomId})
       .populate('room', 'name')
       .populate('user', 'firstname lastname')
       .lean();

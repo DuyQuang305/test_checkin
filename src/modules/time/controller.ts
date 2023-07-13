@@ -9,6 +9,98 @@ import { Time } from '../../models/time';
 import { Room } from '../../models/room';
 
 export default class TimeController {
+
+  /**
+   * @swagger
+   * /time/addTime/{roomId}:
+   *   post:
+   *     tags:
+   *       - Time
+   *     summary: "Add the start and end time of the room"
+   *     description: "Add the start and end time of the room"
+   *     security:
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: body
+   *         name: time
+   *         description: time to update
+   *         schema:
+   *           type: object
+   *           propertise:
+   *             - start_time:
+   *                 type: date
+   *                 description: New start_time
+   *             - end_time:
+   *                 type: date
+   *                 description: New end_time
+   *           example:
+   *             "time": [
+   *                       {
+   *                           "start_time": "2023-07-14T05:00:00.00Z",
+   *                           "end_time": "2023-07-14T10:00:00.00Z"
+   *                       }
+   *                     ]                 
+   *       - in: path
+   *         name: roomId
+   *         schema: 
+   *           type: string   
+   *         example: 64a7e2a6e4fd64dfbe93961a  
+   *     responses:
+   *       201:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 201
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 401
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
   async addTime (req: Request | any, res: Response): Promise<any>{
     try {
       const {roomId} = req.params
@@ -130,8 +222,6 @@ export default class TimeController {
    *              example: false
    *             message:
    *              type: string
-   *             data:
-   *              type: object
    */
 
   async changeTime(req: Request | any, res) {

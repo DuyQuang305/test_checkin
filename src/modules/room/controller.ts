@@ -112,16 +112,14 @@ export default class Controller {
       const user = req.user.id
       
       const room = await Room.findById(roomId)
-        .populate('owner', 'firstname lastname avatar')
-        .populate('members', 'firstname lastname avatar');
+                              .populate('owner', 'firstname lastname')
+                              .populate('members', 'firstname lastname')
       
-      const members = room.members
-      const owner = room.owner
-      const isMember = members.some(member => {
+      const isMember = room.members.some(member => {
         return member._id = user
       })
       
-      if (!isMember || (user != owner) ) {
+      if (!isMember || (room.owner._id != user) ) {
         return createResponse(res, 403, false, 'To view information about the room, the user must be either the owner of the room or a member of the room.')
       }
 
@@ -254,7 +252,7 @@ export default class Controller {
 
 /**
    * @swagger
-   * /room/inviteMember:
+   * /room/inviteMember/{roomId}:
    *   post:
    *     tags:
    *       - Room
@@ -272,6 +270,11 @@ export default class Controller {
    *             emails:
    *               type: array
    *           example: ["abc@gmail.com", "bce@gmail.com"]
+   *       - in: path
+   *         name: roomId
+   *         description: "The room to which the member joins to check in."   
+   *         schema:
+   *           type: string
    *     responses:
    *       201:
    *         description: "Successfully"
@@ -336,7 +339,18 @@ export default class Controller {
   //  gửi email cho người dùng
   async inviteMember(req: Request | any, res: Response, next: NextFunction) {
     try {
-      const { roomId, emails } = req.body;
+      const { roomId } = req.params
+      const { emails } = req.body;
+      const user = req.user.id
+      const room = await Room.findById(roomId)
+       
+      const isMember = room.members.some((id) => {
+        return id = user
+      })
+
+      if (!isMember || (room.owner ! = user) ) {
+        return createResponse(res, 403, false, 'Only the room owner or members in the room have the right to invite others into the room')
+      }
 
       emails.forEach((email) => {
         const mailOptions = {
