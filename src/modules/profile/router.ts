@@ -3,7 +3,7 @@ import express from 'express';
 import ProfileController from './controller';
 import userSchema from './validations/user';
 
-import Validation from '../../middlewares/Validation';
+import Validation from '../../middlewares/validation';
 import { jwtGuard } from '../../middlewares/jwtGuard';
 const upload = require('../../middlewares/upload');
 
