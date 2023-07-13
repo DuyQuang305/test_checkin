@@ -15,13 +15,11 @@ const options = {
         }
       },
       info: {
-        title: 'REST - Swagger',
+        title: 'Attendance App API',
         version: '1.0.0',
-        description: 'REST API with Swagger doc',
+        description: 'An attendance application for students to mark attendance each class',
       },
       schemes: ['http'],
-      host: 'localhost:8000',
-      basePath: '/',
     },
     apis: [
       './src/modules/auth/controller.ts',
