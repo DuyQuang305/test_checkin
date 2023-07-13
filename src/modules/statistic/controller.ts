@@ -86,26 +86,29 @@ export default class StatisticController {
    */
 
   async attendanceHistory(req: Request | any, res: Response) {
-    const {limit, currentPage} = req.query
+    try {
+      const {limit, currentPage} = req.query
 
-    const attendanceCount = await Attendance.countDocuments({})
-    const pageLimit = parseInt(limit) || 5
-    const skipCount = pageLimit * ((currentPage <= 0 ? 1 : currentPage) - 1);
-
-    const pageCount = Math.ceil(attendanceCount / pageLimit);
-    const attendance = await Attendance.find({})
-                                       .populate('user', 'firstname lastname')
-                                       .populate('room', 'name')
-                                       .skip(skipCount)
-                                       .limit(limit)
-                                       .lean();
-    
-    if (!attendance) {
-      return createResponse(res, 400, false, 'attendance not found');
+      const attendanceCount = await Attendance.countDocuments({})
+      const pageLimit = parseInt(limit) || 5
+      const skipCount = pageLimit * ((currentPage <= 0 ? 1 : currentPage) - 1);
+  
+      const pageCount = Math.ceil(attendanceCount / pageLimit);
+      const attendance = await Attendance.find({})
+                                         .populate('user', 'firstname lastname')
+                                         .populate('room', 'name')
+                                         .skip(skipCount)
+                                         .limit(limit)
+                                         .lean();
+      
+      if (!attendance) {
+        return createResponse(res, 400, false, 'attendance not found');
+      }
+  
+      return createResponse(res, 200, true, 'get attendance history successfully', attendance, attendanceCount, pageCount)
+    } catch (error) {
+      return createResponse(res, 500, false, error.message)
     }
-
-    return createResponse(res, 200, true, 'get attendance history successfully', attendance, pageCount)
-                                      
   } 
 
   /**

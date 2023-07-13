@@ -6,6 +6,8 @@ export default function createResponse(
   success: boolean,
   message: string,
   data?: object | number | string,
+  numberOfRecords?: number,
+  numberOfPages?: number
 ) {
-  return res.status(statusCode).json({ statusCode, success, message, data });
+  return res.status(statusCode).json({ statusCode, success, message, data, numberOfRecords, numberOfPages });
 }

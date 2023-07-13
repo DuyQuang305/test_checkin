@@ -13,6 +13,112 @@ import checkTime from '../../common/function/checkTime';
 require('dotenv').config;
 
 export default class Controller {
+
+  /**
+   * @swagger
+   * /room:
+   *   get:
+   *     tags:
+   *       - Room
+   *     summary: "Get room and paginate page"
+   *     description: "Get room and paginate page"
+   *     security: 
+   *       - bearerAuth: []
+   *     parameters:
+   *       - in: query
+   *         name: currentPage
+   *         schema: 
+   *           type: integer
+   *       - in: query
+   *         name: limit
+   *         schema:
+   *           type: integer
+   *     responses:
+   *       200:
+   *         description: "Successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *               example: Get Successfully
+   *             data:
+   *               type: object
+   *       400:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 400
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Get history attendance failed"
+   *       401:
+   *          description: "Failed"
+   *          schema:
+   *            type: object
+   *            properties:
+   *              statusCode:
+   *                type: number
+   *                example: 401
+   *              success:
+   *                type: boolean
+   *                example: false
+   *              message:
+   *                type: string
+   *                example: "Unauthorization"
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *              example: "Server internal error"
+   */
+
+  async showRoom (req: Request | any, res: Response) {
+    try {
+      const {limit, currentPage} = req.query
+
+      const roomCount = await Room.countDocuments({})
+      const pageLimit = parseInt(limit) || 5
+      const skipCount = pageLimit * ((currentPage <= 0 ? 1 : currentPage) - 1);
+  
+      const pageCount = Math.ceil(roomCount / pageLimit);
+      const room = await Room.find({})
+                                         .populate('members', 'firstname lastname')
+                                         .populate('owner', 'firstname lastname')
+                                         .skip(skipCount)
+                                         .limit(limit)
+                                         .lean();
+      
+      if (!room) {
+        return createResponse(res, 400, false, 'room not found');
+      }
+  
+      return createResponse(res, 200, true, 'get room successfully', room, roomCount, pageCount)
+    } catch (error) {
+      return createResponse(res, 500, false, error.message)
+    }
+  }
   /**
    * @swagger
    * /room/{roomId}:
@@ -106,7 +212,7 @@ export default class Controller {
    *              type: object
    */
 
-  async showRoom(req: Request | any, res: Response, next: NextFunction) {
+  async showRoomDetail(req: Request | any, res: Response, next: NextFunction) {
     try {
       const { roomId } = req.params;
       const user = req.user.id
