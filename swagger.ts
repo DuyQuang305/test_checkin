@@ -19,7 +19,7 @@ const options = {
         version: '1.0.0',
         description: 'An attendance application for students to mark attendance each class',
       },
-      schemes: ['http'],
+      schemes: ['http', 'https'],
     },
     apis: [
       './src/modules/auth/controller.ts',
