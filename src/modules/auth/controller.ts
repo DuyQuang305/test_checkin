@@ -104,14 +104,111 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
+
   /**
    * @swagger
-   * /auth/sendVerificationCode:
+   * /auth/login:
    *   post:
    *     tags:
    *       - Auth
-   *     summary: "Send email"
-   *     description: "Send email to user"
+   *     summary: "Log in to your account"
+   *     description: "Log in to your account using your email and password"
+   *     parameters:
+   *       - in: body
+   *         name: user
+   *         description: "The user to Login."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - email
+   *             - password
+   *             - properties
+   *           properties:
+   *             email:
+   *               type: string
+   *             password:
+   *               type: string
+   *     responses:
+   *       200:
+   *         description: "Log in successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *             token:
+   *               type: string
+   *               description: JWT token for authentication
+   *       400:
+   *          description: "Log in account failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
+
+  async login(req: Request, res: Response) {
+    try {
+      const { email, password } = req.body;
+      const user = await User.findOne({ email: email });
+
+      if (!user) {
+        return createResponse(res, 400, false, 'Invalid email');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return createResponse(res, 400, false, 'Invalid password');
+      }
+
+      if (user.isVerify == false) {
+        return createResponse(
+          res,
+          400,
+          false,
+          'Please verify your email address before logging in',
+        );
+      }
+
+      const token = await signToken(res, user.id, user.email);
+      return token;
+    } catch (error) {
+      return createResponse(res, 500, false, error.message);
+    }
+  }
+  /**
+   * @swagger
+   * /auth/reset-password-request:
+   *   post:
+   *     tags:
+   *       - Auth
+   *     summary: "Reset Password Request Path"
+   *     description: "When the user enters his email address in the "forgot password" page, the system will send a password reset request to this email address. This link will process this request by generating a verification code and sending an email containing the verification code to the user's email address"
    *     parameters:
    *       - in: body
    *         name: email
@@ -164,7 +261,7 @@ export default class AuthController {
    *             message:
    *               type: string
    */
-  async sendConfirmationMessage(req: Request, res: Response) {
+  async resetPasswordRequest(req: Request, res: Response) {
     try {
       const { email } = req.body;
 
@@ -374,7 +471,7 @@ export default class AuthController {
 
   /**
    * @swagger
-   * /auth/verifyUser/{email}:
+   * /auth/verify-password-reset-code:
    *   get:
    *     tags:
    *       - Auth
@@ -391,11 +488,11 @@ export default class AuthController {
    *           properties:
    *             verificationCode:
    *               type: string
-   *       - in: path
+   *       - in: query
    *         name: email
-   *         description: "The email of the user to verify user"
    *         schema:
    *           type: string
+   *         description: "The email of the user to verify user"
    *     responses:
    *       201:
    *         description: "Verify user successfully"
@@ -437,10 +534,10 @@ export default class AuthController {
    *              type: string
    */
 
-  async verifyUser(req: Request, res: Response) {
+  async verifyPasswordResetCode(req: Request | any, res: Response) {
     try {
       const verificationCode = req.body.verificationCode;
-      const email = req.params.email;
+      const email: string = req.query.email;
       const user = await User.findOne({ email });
 
       if (!user) {
@@ -472,106 +569,11 @@ export default class AuthController {
     }
   }
 
-  /**
-   * @swagger
-   * /auth/login:
-   *   post:
-   *     tags:
-   *       - Auth
-   *     summary: "Log in to your account"
-   *     description: "Log in to your account using your email and password"
-   *     parameters:
-   *       - in: body
-   *         name: user
-   *         description: "The user to Login."
-   *         schema:
-   *           type: object
-   *           required:
-   *             - email
-   *             - password
-   *             - properties
-   *           properties:
-   *             email:
-   *               type: string
-   *             password:
-   *               type: string
-   *     responses:
-   *       200:
-   *         description: "Log in successfully"
-   *         schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *               type: number
-   *               example: 200
-   *             success:
-   *               type: boolean
-   *             message:
-   *               type: string
-   *             token:
-   *               type: string
-   *               description: JWT token for authentication
-   *       400:
-   *          description: "Log in account failed"
-   *          schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *              type: number
-   *              example: 400
-   *             success:
-   *              type: boolean
-   *              example: false
-   *             message:
-   *              type: string
-   *       500:
-   *         description: "Server internal error "
-   *         schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *              type: number
-   *              example: 500
-   *             success:
-   *              type: boolean
-   *              example: false
-   *             message:
-   *              type: string
-   */
-
-  async login(req: Request, res: Response) {
-    try {
-      const { email, password } = req.body;
-      const user = await User.findOne({ email: email });
-
-      if (!user) {
-        return createResponse(res, 400, false, 'Invalid email');
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return createResponse(res, 400, false, 'Invalid password');
-      }
-
-      if (user.isVerify == false) {
-        return createResponse(
-          res,
-          400,
-          false,
-          'Please verify your email address before logging in',
-        );
-      }
-
-      const token = await signToken(res, user.id, user.email);
-      return token;
-    } catch (error) {
-      return createResponse(res, 500, false, error.message);
-    }
-  }
+  
 
   /**
    * @swagger
-   * /auth/resetPassword/{email}:
+   * /auth/resetPassword:
    *   put:
    *     tags:
    *       - Auth
@@ -588,11 +590,11 @@ export default class AuthController {
    *           properties:
    *             password:
    *               type: string
-   *       - in: path
+   *       - in: query
    *         name: email
-   *         description: "The email of the user to change Password"
    *         schema:
    *           type: string
+   *         description: "The email of the user to change Password"
    *     responses:
    *       201:
    *         description: "Change password successfully"
@@ -636,7 +638,7 @@ export default class AuthController {
 
   async resetPassword(req: Request, res: Response): Promise<object> {
     try {
-      const { email } = req.params;
+      const { email } = req.query;
       const { password } = req.body;
 
       if (!password) {

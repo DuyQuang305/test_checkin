@@ -12,8 +12,8 @@ const authController = new AuthController();
 router.post('/register', Validation(registerSchema), authController.register);
 router.post('/login', Validation(LoginSchema), authController.login);
 router.post('/refresh', authController.refreshToken);
-router.post('/sendVerificationCode', authController.sendConfirmationMessage);
-router.get('/verifyUser/:email', authController.verifyUser);
-router.put('/resetPassword/:email', authController.resetPassword);
+router.post('/reset-password-request', authController.resetPasswordRequest);
+router.get('/verify-password-reset-code', authController.verifyPasswordResetCode);
+router.put('/resetPassword', authController.resetPassword);
 
 export default router;
