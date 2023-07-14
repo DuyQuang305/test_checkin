@@ -208,7 +208,7 @@ export default class AuthController {
    *     tags:
    *       - Auth
    *     summary: "Reset Password Request Path"
-   *     description: "When the user enters his email address in the "forgot password" page, the system will send a password reset request to this email address. This link will process this request by generating a verification code and sending an email containing the verification code to the user's email address"
+   *     description: "This link will process this request by generating a verification code and sending an email containing the verification code to the user's email address."
    *     parameters:
    *       - in: body
    *         name: email
