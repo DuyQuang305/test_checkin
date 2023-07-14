@@ -203,7 +203,7 @@ export default class AuthController {
   }
   /**
    * @swagger
-   * /auth/reset-password-request:
+   * /auth/verify-user-request:
    *   post:
    *     tags:
    *       - Auth
@@ -261,7 +261,7 @@ export default class AuthController {
    *             message:
    *               type: string
    */
-  async resetPasswordRequest(req: Request, res: Response) {
+  async verifyUserRequest(req: Request, res: Response) {
     try {
       const { email } = req.body;
 
@@ -471,7 +471,7 @@ export default class AuthController {
 
   /**
    * @swagger
-   * /auth/verify-password-reset-code:
+   * /auth/verify-user-by-code:
    *   get:
    *     tags:
    *       - Auth
@@ -534,7 +534,7 @@ export default class AuthController {
    *              type: string
    */
 
-  async verifyPasswordResetCode(req: Request | any, res: Response) {
+  async verifyUserByCode(req: Request | any, res: Response) {
     try {
       const verificationCode = req.body.verificationCode;
       const email: string = req.query.email;
@@ -573,7 +573,7 @@ export default class AuthController {
 
   /**
    * @swagger
-   * /auth/resetPassword:
+   * /auth/reset-password:
    *   put:
    *     tags:
    *       - Auth
