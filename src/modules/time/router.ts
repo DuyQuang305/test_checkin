@@ -6,7 +6,7 @@ const router = express.Router();
 
 const timeController = new TimeController();
 
-router.post('/addTime/:roomId', jwtGuard, timeController.addTime);
+router.post('/add-time/:roomId', jwtGuard, timeController.addTime);
 router.patch('/:timeId', jwtGuard, timeController.changeTime);
 
 export default router;

@@ -3,7 +3,7 @@ import { Room } from '../../models/room';
 import { User } from '../../models/user';
 import { Time } from '../../models/time';
 
-import sendEmail from '../../services/sendMail';
+import sendEmail from '../../services/nodeMailer';
 import getIpAddress from '../../services/IpAddress';
 
 import createResponse from '../../common/function/createResponse';
@@ -225,7 +225,7 @@ export default class Controller {
         return member._id = user
       })
       
-      if (!isMember || (room.owner._id != user) ) {
+      if (!isMember && (room.owner._id != user) ) {
         return createResponse(res, 403, false, 'To view information about the room, the user must be either the owner of the room or a member of the room.')
       }
 
@@ -358,7 +358,7 @@ export default class Controller {
 
 /**
    * @swagger
-   * /room/inviteMember/{roomId}:
+   * /room/invite-member/{roomId}:
    *   post:
    *     tags:
    *       - Room
@@ -447,14 +447,14 @@ export default class Controller {
     try {
       const { roomId } = req.params
       const { emails } = req.body;
-      const user = req.user.id
+      const userId = req.user.id
       const room = await Room.findById(roomId)
        
       const isMember = room.members.some((id) => {
-        return id = user
+        return id = userId
       })
 
-      if (!isMember || (room.owner ! = user) ) {
+      if (!isMember && (room.owner ! = userId) ) {
         return createResponse(res, 403, false, 'Only the room owner or members in the room have the right to invite others into the room')
       }
 
@@ -476,7 +476,7 @@ export default class Controller {
   }
 /**
    * @swagger
-   * /room/addMember/{roomId}:
+   * /room/add-member/{roomId}:
    *   put:
    *     tags:
    *       - Room

@@ -15,7 +15,7 @@ router.get('/history-me', jwtGuard, statisticController.myAttendanceHistory);
 router.get('/find-by-user/:userId', jwtGuard, statisticController.AttendanceHistoryPerson);
 
 router.get(
-  '/attendanceByRoom/:roomId',
+  '/attendance-by-room/:roomId',
   jwtGuard,
   statisticController.attendanceByRoom,
 );

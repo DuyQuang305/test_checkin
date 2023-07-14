@@ -284,7 +284,7 @@ export default class StatisticController {
 
   /**
    * @swagger
-   * /statistic/attendanceByRoom/{roomId}:
+   * /statistic/attendance-by-room/{roomId}:
    *   get:
    *     tags:
    *       - Statistic

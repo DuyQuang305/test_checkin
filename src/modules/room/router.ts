@@ -12,7 +12,7 @@ router.get('/', jwtGuard, roomController.showRoom);
 router.get('/:roomId', jwtGuard, roomController.showRoomDetail);
 router.post('/create', jwtGuard, roomController.createRoom);
 
-router.post('/inviteMember/:roomId', jwtGuard, roomController.inviteMember);
-router.put('/addMember/:roomId', roomController.addMember);
+router.post('/invite-member/:roomId', jwtGuard, roomController.inviteMember);
+router.put('/add-member/:roomId', roomController.addMember);
 
 export default router;

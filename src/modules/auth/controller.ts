@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
 import Token from '../../common/interface/token';
@@ -11,7 +10,7 @@ import { User } from '../../models/user';
 import createResponse from '../../common/function/createResponse';
 
 import cache from '../../services/cache';
-import sendMail from '../../services/sendMail';
+import sendMail from '../../services/nodeMailer';
 
 export default class AuthController {
   /**
@@ -207,7 +206,7 @@ export default class AuthController {
    *   post:
    *     tags:
    *       - Auth
-   *     summary: "Reset Password Request Path"
+   *     summary: "Verify user Request Path"
    *     description: "This link will process this request by generating a verification code and sending an email containing the verification code to the user's email address."
    *     parameters:
    *       - in: body
@@ -272,9 +271,13 @@ export default class AuthController {
       if (!user) {
         return createResponse(res, 404, false, 'User not found');
       }
-
+      
       username = `${user.firstname} ${user.lastname}`;
 
+      user.isVerify = false
+
+      await user.save()
+      
       const verificationCode = crypto.randomBytes(3).toString('hex');
 
       cache.set(email, verificationCode, 60 * 5 * 1000);
@@ -547,8 +550,6 @@ export default class AuthController {
           user.isVerify = true;
           await user.save();
 
-          cache.del(email);
-
           return createResponse(
             res,
             201,
@@ -586,8 +587,11 @@ export default class AuthController {
    *         schema:
    *           type: object
    *           required:
+   *             - verificationCode
    *             - password
    *           properties:
+   *             verificationCode:
+   *               type: string
    *             password:
    *               type: string
    *       - in: query
@@ -636,19 +640,21 @@ export default class AuthController {
    *              type: string
    */
 
-  async resetPassword(req: Request, res: Response): Promise<object> {
+  async resetPassword(req: Request | any, res: Response): Promise<object> {
     try {
       const { email } = req.query;
-      const { password } = req.body;
-
-      if (!password) {
-        return createResponse(res, 400, false, 'Please enter your password');
+      const { password,  verificationCode} = req.body;
+      if (!password || !verificationCode) {
+        return createResponse(res, 400, false, 'invalid input');
       }
 
       const user = await User.findOne({ email });
-
       if (!user) {
         return createResponse(res, 400, false, 'User not found');
+      }
+
+      if (cache.get(email) != verificationCode) {
+        return createResponse(res, 400, false, 'The verification code you entered is invalid or has expired. Please check the code and try again ')
       }
 
       try {

@@ -12,7 +12,7 @@ export default class TimeController {
 
   /**
    * @swagger
-   * /time/addTime/{roomId}:
+   * /time/add-time/{roomId}:
    *   post:
    *     tags:
    *       - Time

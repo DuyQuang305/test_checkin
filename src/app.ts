@@ -5,7 +5,7 @@ import cors from 'cors';
 import passport from 'passport';
 
 import Module from './modules';
-import JWTStrategy from './services/jwtStrategy';
+import JWTStrategy from './services/passport';
 import connect from './common/database';
 
 import swaggerDocs from '../swagger';
