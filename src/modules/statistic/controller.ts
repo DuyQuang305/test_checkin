@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 
 import createResponse from '../../common/function/createResponse';
 
-import { Attendance } from '../../models/attendance';
+import { Attendance } from '../../models';
 
 export default class StatisticController {
   /**

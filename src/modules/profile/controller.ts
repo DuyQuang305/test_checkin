@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, RequestHandler } from 'express';
 import bcrypt from 'bcrypt';
 
-import { User } from '../../models/user';
+import { User } from '../../models';
 import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { Message } from '../../common/constant/message';
 
@@ -76,14 +76,17 @@ export default class ProfileController {
    *             message:
    *              type: string
    */
-  async profile(req: Request, res: Response): Promise<any> {
+  async profile(req: Request | any, res: Response): Promise<any> {
     try {
+      const userId = req.user.id
+
+      const user = await User.findById(userId).select(['firstname', 'lastname', 'email'])
       return createResponse(
         res,
         200,
         true,
         'Get profile successfully',
-        req.user,
+        user,
       );
     } catch (error) {
       return createResponse(res, 500, false, error.message);

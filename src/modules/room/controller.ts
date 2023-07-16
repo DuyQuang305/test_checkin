@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Room } from '../../models/room';
-import { User } from '../../models/user';
-import { Time } from '../../models/time';
+import { Room, User, Time } from '../../models';
 
-import sendEmail from '../../services/nodeMailer';
-import getIpAddress from '../../services/IpAddress';
+const transporter = require('../../services/nodeMailer');
+import getIpAddress from '../../services/ipify';
 
 import createResponse from '../../common/function/createResponse';
 
@@ -454,22 +452,40 @@ export default class Controller {
         return id = userId
       })
 
-      if (!isMember && (room.owner ! = userId) ) {
+      if (!isMember && (room.owner != userId) ) {
         return createResponse(res, 403, false, 'Only the room owner or members in the room have the right to invite others into the room')
       }
 
-      emails.forEach((email) => {
+      emails.forEach(async (email) => {
+        const user = await User.findOne({email})
+
+        if (!user) { 
+          return;
+        }
+
+        const username = `${user.firstname} ${user.lastname}`
+
         const mailOptions = {
           from: process.env.EMAIL,
           to: email,
           subject: 'Invite to join checkin',
-          text: `You have been invited to join a room for check-in. Please click on the following link to access the room: ${process.env.URL_SERVER}/room/${roomId}`,
+          template: 'invite-join-room',
+          context: {
+            username,
+            joinLink: `daylalinkdejoinhihi`
+          } 
         };
 
-        sendEmail(mailOptions);
+        try {
+          await transporter.sendMail(mailOptions);
+        } catch (error) {
+          // return createResponse(res, 500, false, error.message)
+          console.log(error.message);
+          
+        }
       });
 
-      return createResponse(res, 201, true, 'Invite members successfully');
+      return createResponse(res, 200, true, 'Invite members successfully');
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }

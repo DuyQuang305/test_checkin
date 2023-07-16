@@ -1,16 +1,16 @@
 import express from 'express';
 
 import AuthController from './controller';
-import LoginSchema from './validations/login';
-import registerSchema from './validations/register';
+import SchemaValidation from './validations';
 
 import Validation from '../../middlewares/validation';
 
 const router = express.Router();
 const authController = new AuthController();
+const schemaValidation = new SchemaValidation();
 
-router.post('/register', Validation(registerSchema), authController.register);
-router.post('/login', Validation(LoginSchema), authController.login);
+router.post('/register', Validation(schemaValidation.Register), authController.register);
+router.post('/login', Validation(schemaValidation.Login), authController.login);
 router.post('/refresh', authController.refreshToken);
 router.post('/verify-user-request', authController.verifyUserRequest);
 router.get('/verify-user-by-code', authController.verifyUserByCode);

@@ -7,10 +7,9 @@ import passport from 'passport';
 import Module from './modules';
 import JWTStrategy from './services/passport';
 import connect from './common/database';
-
-import swaggerDocs from '../swagger';
-
+import swaggerDocs from './common/swagger';
 dotenv.config();
+
 const app = express();
 
 connect();
@@ -20,6 +19,7 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
+app.use('/images', express.static(__dirname + '/images'));
 app.set('trust proxy', true);
 // Use Helmet!
 app.use(
