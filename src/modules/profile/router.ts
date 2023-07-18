@@ -20,10 +20,11 @@ router.patch(
   profileController.editProfile,
 );
 
+router.post('/send-verification-change-email', jwtGuard, profileController.sendMessage)
+
 router.patch(
   '/email',
   jwtGuard,
-  Validation(userSchema),
   profileController.editEmail,
 );
 router.delete('/', jwtGuard, profileController.delete);

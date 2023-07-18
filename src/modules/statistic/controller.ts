@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose'
 
 import createResponse from '../../common/function/createResponse';
 
 import { Attendance } from '../../models';
+
+import AttendanceInterface from '../../common/interface/attendance';
 
 export default class StatisticController {
   /**
@@ -366,5 +369,46 @@ export default class StatisticController {
       'Get Attendance History By Room successfully',
       attendances,
     );
+  }
+
+  async lateEarlyArrival(req: Request | any, res: Response): Promise<Object> {
+    const {userId, roomId, month, year} = req.params
+
+    const nextMonth: number = Number(month) + 1
+    const firstMonth: Date = new Date(`${year}-0${month}-01T00:00:00.000Z`) 
+    const endOfMonth: Date = new Date(`${year}-0${nextMonth}-01T00:00:00.000Z`) 
+
+    let totalArrivalEarlyMinutes = 0;
+    let totalArrivalLateMinutes = 0;
+
+    const attendance: AttendanceInterface[] = await Attendance.find({
+      room: roomId,
+      user: userId, 
+      checkIn: { $gte: new Date(firstMonth),
+                 $lt: new Date(endOfMonth) }
+    }).populate('time', 'start_time end_time');
+
+    attendance.forEach(attendanceEntry => {
+
+      const checkIn = new Date(attendanceEntry.checkIn);
+      const startTime = attendanceEntry.time.start_time
+      const endTime = attendanceEntry.time.end_time 
+    
+      if (startTime && endTime) {
+        if (checkIn < startTime) {
+          const earlyMinutes = Math.round(Number(startTime) - Number(checkIn) / 60000);
+          totalArrivalEarlyMinutes += earlyMinutes;
+        } else if (checkIn > startTime) {
+          const lateMinutes = Math.round(Number(checkIn) - Number(startTime)) / 60000;
+          totalArrivalLateMinutes += lateMinutes;
+        }
+      }
+    });
+
+    
+    
+
+    return res.json({attendance, totalArrivalEarlyMinutes, totalArrivalLateMinutes})
+    
   }
 }

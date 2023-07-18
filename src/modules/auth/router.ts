@@ -12,8 +12,10 @@ const schemaValidation = new SchemaValidation();
 router.post('/register', Validation(schemaValidation.Register), authController.register);
 router.post('/login', Validation(schemaValidation.Login), authController.login);
 router.post('/refresh', authController.refreshToken);
-router.post('/verify-user-request', authController.verifyUserRequest);
-router.get('/verify-user-by-code', authController.verifyUserByCode);
+router.post('/verify-user-by-code', authController.verifyUserByCode);
+// api này dùng chung khi mà người dùng yêu cầu gửi lại mã xác minh khi đăng kí và yêu cầu đổi lại mật khẩu
+router.post('/resend-verification-code', authController.resendVerificationCode)
+
 router.put('/reset-password', authController.resetPassword);
 
 export default router;

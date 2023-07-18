@@ -443,6 +443,7 @@ export default class Controller {
   //  gửi email cho người dùng
   async inviteMember(req: Request | any, res: Response, next: NextFunction) {
     try {
+      // chỉ có chủ room mới được mời
       const { roomId } = req.params
       const { emails } = req.body;
       const userId = req.user.id
@@ -573,8 +574,9 @@ export default class Controller {
    */
 
   //  mời người dùng bằng cách nhập mail
-  async addMember(req: Request | any, res: Response, next: NextFunction) {
+  async acceptMember(req: Request | any, res: Response, next: NextFunction) {
     try {
+      // nhận mã lưu ở cache qua query, có mã phòng
       const { roomId } = req.params;
       const { email } = req.body;
 

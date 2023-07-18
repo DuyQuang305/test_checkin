@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response, RequestHandler } from 'express';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 import { User } from '../../models';
 import { SECRET_ROUNDS } from '../../common/constant/secret';
@@ -10,6 +11,9 @@ import createResponse from '../../common/function/createResponse';
 import cache from '../../services/cache';
 
 import removeExistsFile from '../../middlewares/removeExistsFile';
+
+const transporter = require('../../services/nodeMailer');
+
 
 export default class ProfileController {
   /**
@@ -226,6 +230,62 @@ export default class ProfileController {
       return createResponse(res, 500, false, error.message);
     }
   }
+
+  async sendMessage(
+    req: Request | any,
+    res: Response,
+    next: NextFunction,
+  ): Promise<any> {
+    try {
+      const {email, type} = req.body
+
+      if(!type) {
+        return createResponse(res, 400, false, 'please enter your type verify code')
+      }
+
+      const user = await User.findOne({email})
+
+      if(!user) {
+        return createResponse(res, 400, false, 'User not found')
+      }
+
+      const username = `${user.firstname} ${user.lastname}`
+
+      const verificationCode = crypto.randomBytes(3).toString('hex');
+
+      
+      const isExistsCode = cache.get(`${email}-${type}`)
+      
+      if (isExistsCode) {
+        return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
+      }
+      
+      cache.set(`${email}-${type}`, verificationCode, 5 * 60 )
+
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Send verification code',
+        template: 'verify-user',
+        context: {
+          verificationCode,
+          username,
+        }
+      }  
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      return createResponse(res, 500, false, 'Send mail failed, please try again!')
+    }
+
+    return createResponse(res, 200, true, 'Send mail successfully, please check your email to verify account');
+  
+    } catch (error) {
+      return createResponse(res, 500, false, error.message);
+    }
+  }
+
   /**
    * @swagger
    * /profile/email:
@@ -319,11 +379,11 @@ export default class ProfileController {
     next: NextFunction,
   ): Promise<any> {
     try {
-      const { email, verificationCode } = req.body;
+      const { verificationCode, email} = req.body;
 
       const user = await User.findById(req.user.id);
 
-      const code = cache.get(user.email);
+      const code = cache.get(`${user.email}-verify-change-email`);
 
       if (verificationCode == code) {
         await User.findByIdAndUpdate(
@@ -332,7 +392,7 @@ export default class ProfileController {
             email,
           },
         );
-        cache.del(email);
+        cache.del(`${email}-verify-change-email`);
 
         return createResponse(
           res,

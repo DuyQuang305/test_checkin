@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import createResponse from '../../common/function/createResponse';
 
-import { Attendance } from '../../models/attendance';
-import { Room } from '../../models/room';
-import { Time } from '../../models/time';
+import { Attendance, Room, Time } from '../../models';
 
 export default class AttendanceController {
 
@@ -117,7 +115,7 @@ export default class AttendanceController {
         return (member = user);
       });
 
-      if (!isMember) {
+      if (!isMember && room.owner != user) {
         return createResponse(
           res,
           403,
@@ -168,9 +166,9 @@ export default class AttendanceController {
           );
         });
 
-        const startTime = time ? time.start_time : null;
+        const timeId = time ? time._id : null;
 
-        if (!startTime) {
+        if (!timeId) {
           return createResponse(
             res,
             400,
@@ -179,9 +177,7 @@ export default class AttendanceController {
           );
         }
 
-        const isLateArrival = attendance.checkIn > startTime;
-
-        attendance.isLateArrival = isLateArrival;
+        attendance.time = timeId
 
         await attendance.save();
 
@@ -301,9 +297,6 @@ export default class AttendanceController {
 
       const now: Date = new Date();
       const attendanceResult = await attendance();
-      console.log(user);
-      console.log(roomId);
-      
       
       const attendanceExists = await Attendance.findOne({
         user,
@@ -312,37 +305,11 @@ export default class AttendanceController {
           $gte: attendanceResult.day,
         },
       });
-      console.log(attendanceExists);
-      
 
       if (!attendanceExists || !attendanceExists.checkIn) {
         return createResponse(res, 400, false, 'You havent checked in yet');
       } else {
         attendanceExists.checkOut = now;
-
-        const schedule = await Time.find({ room: roomId });
-
-        const time = schedule.find((time) => {
-          return (
-            new Date(time.end_time).toDateString() ===
-            new Date(attendanceExists.checkOut).toDateString()
-          );
-        });
-
-        const endTime = time ? time.end_time : null;
-
-        if (!endTime) {
-          return createResponse(
-            res,
-            400,
-            false,
-            'No attendance schedule today',
-          );
-        }
-
-        const isLeaveEarly = attendanceExists.checkOut < endTime;
-
-        attendanceExists.isLeaveEarly = isLeaveEarly;
 
         await attendanceExists.save();
 

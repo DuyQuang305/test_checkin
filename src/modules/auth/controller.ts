@@ -10,6 +10,7 @@ import { User } from '../../models';
 import createResponse from '../../common/function/createResponse';
 
 import cache from '../../services/cache';
+import { create } from 'express-handlebars';
 const transporter = require('../../services/nodeMailer');
 
 export default class AuthController {
@@ -98,7 +99,36 @@ export default class AuthController {
         password: hashedPassword,
       }).save();
 
-      return createResponse(res, 201, true, 'Created user successfully');
+      if(!user) {
+        return createResponse(res, 400, false, 'Create user failed')
+      }
+
+      const username = `${firstname} ${lastname}`
+
+      const verificationCode = crypto.randomBytes(3).toString('hex');
+
+      cache.set(`${email}-verify-account`, verificationCode, 5 * 60)
+
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Email verification',
+        template: 'verify-user',
+        context: {
+          verificationCode,
+          username,
+        }
+      }  
+
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log('send mail success');
+        
+      } catch (error) {
+        return createResponse(res, 500, false, 'Send mail failed, please try again!')
+      }
+
+      return createResponse(res, 201, true, 'Created user successfully, please check your email to verify account');
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
@@ -200,109 +230,6 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
-  /**
-   * @swagger
-   * /auth/verify-user-request:
-   *   post:
-   *     tags:
-   *       - Auth
-   *     summary: "Verify user Request Path"
-   *     description: "This link will process this request by generating a verification code and sending an email containing the verification code to the user's email address."
-   *     parameters:
-   *       - in: body
-   *         name: email
-   *         description: "The email to send."
-   *         schema:
-   *           type: object
-   *           required:
-   *             - email
-   *             - properties
-   *           properties:
-   *             email:
-   *               type: string
-   *     responses:
-   *       200:
-   *         description: "Send email successfully"
-   *         schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *               type: number
-   *               example: 200
-   *             success:
-   *               type: boolean
-   *             message:
-   *               type: string
-   *       400:
-   *          description: "Send email failed"
-   *          schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *               type: number
-   *               example: 400
-   *             success:
-   *               type: boolean
-   *               example: false
-   *             message:
-   *               type: string
-   *       500:
-   *         description: "Server internal error "
-   *         schema:
-   *           type: object
-   *           properties:
-   *             statusCode:
-   *               type: number
-   *               example: 500
-   *             success:
-   *               type: boolean
-   *               example: false
-   *             message:
-   *               type: string
-   */
-  async verifyUserRequest(req: Request, res: Response) {
-    try {
-      const { email } = req.body;
-
-      let username: String = undefined;
-
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        return createResponse(res, 404, false, 'User not found');
-      }
-      
-      username = `${user.firstname} ${user.lastname}`;
-
-      user.isVerify = false
-
-      await user.save()
-      
-      const verificationCode = crypto.randomBytes(3).toString('hex');
-
-      cache.set(email, verificationCode, 60 * 5 * 1000);
-
-      const mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Email verification',
-        template: 'verify-user',
-        context: {
-          verificationCode,
-          username,
-        }
-      }  
-      try {
-        await transporter.sendMail(mailOptions);
-      } catch (error) {
-        return createResponse(res, 500, false, error.message)
-      }
-
-      return createResponse(res, 200, true, 'Sent message successfully');
-    } catch (error) {
-      return createResponse(res, 500, false, error.message);
-    }
-  }
 
   /**
    * @swagger
@@ -378,9 +305,11 @@ export default class AuthController {
       if (!user) {
         return createResponse(res, 404, false, 'User not found');
       } else {
-        if (verificationCode == cache.get(email)) {
+        if (verificationCode == cache.get(`${email}-verify-account`)) {
           user.isVerify = true;
           await user.save();
+
+          cache.del(`${email}-verify-account`)
 
           return createResponse(
             res,
@@ -393,7 +322,7 @@ export default class AuthController {
             res,
             400,
             false,
-            'The verification code you entered is invalid or has expired. Please check the code and try again',
+            'The verification code you entered is invalid. Please check the code and try again',
           );
         }
       }
@@ -402,7 +331,56 @@ export default class AuthController {
     }
   }
 
-  
+  async resendVerificationCode(req: Request, res: Response) {
+    try {
+        const {email, type} = req.body
+
+        if(!type) {
+          return createResponse(res, 400, false, 'please enter your type verify code')
+        }
+
+        const user = await User.findOne({email})
+
+        if(!user) {
+          return createResponse(res, 400, false, 'User not found')
+        }
+
+        const username = `${user.firstname} ${user.lastname}`
+
+        const verificationCode = crypto.randomBytes(3).toString('hex');
+
+        
+        const isExistsCode = cache.get(`${email}-${type}`)
+        
+        if (isExistsCode) {
+          return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
+        }
+        
+        cache.set(`${email}-${type}`, verificationCode, 5 * 60 )
+
+        const mailOptions = {
+          from: process.env.EMAIL,
+          to: email,
+          subject: 'Resend verification code',
+          template: 'verify-user',
+          context: {
+            verificationCode,
+            username,
+          }
+        }  
+
+      try {
+        await transporter.sendMail(mailOptions);
+      } catch (error) {
+        return createResponse(res, 500, false, 'Send mail failed, please try again!')
+      }
+
+    return createResponse(res, 200, true, 'Send mail successfully, please check your email to verify account');
+    
+  } catch (error) {
+    return createResponse(res, 500, false, error.message)
+  }
+}
 
   /**
    * @swagger
@@ -485,7 +463,7 @@ export default class AuthController {
         return createResponse(res, 400, false, 'User not found');
       }
 
-      if (cache.get(email) != verificationCode) {
+      if (cache.get(`${email}-verify-password`) != verificationCode) {
         return createResponse(res, 400, false, 'The verification code you entered is invalid or has expired. Please check the code and try again ')
       }
 
@@ -493,6 +471,7 @@ export default class AuthController {
         const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
         user.password = await hashedPassword;
         await user.save();
+        cache.del(`${email}-verify-password`)
       } catch (error) {
         return createResponse(res, 400, false, error.message);
       }
