@@ -234,7 +234,7 @@ export default class AuthController {
   /**
    * @swagger
    * /auth/verify-user-by-code:
-   *   get:
+   *   post:
    *     tags:
    *       - Auth
    *     summary: "Verify User"
