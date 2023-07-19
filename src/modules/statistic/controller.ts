@@ -378,8 +378,8 @@ export default class StatisticController {
     const firstMonth: Date = new Date(`${year}-0${month}-01T00:00:00.000Z`) 
     const endOfMonth: Date = new Date(`${year}-0${nextMonth}-01T00:00:00.000Z`) 
 
-    let totalArrivalEarlyMinutes = 0;
-    let totalArrivalLateMinutes = 0;
+    let totalArrivalEarlyHours = 0;
+    let totalArrivalLateHours = 0;
 
     const attendance: AttendanceInterface[] = await Attendance.find({
       room: roomId,
@@ -396,11 +396,11 @@ export default class StatisticController {
     
       if (startTime && endTime) {
         if (checkIn < startTime) {
-          const earlyMinutes = Math.round(Number(startTime) - Number(checkIn) / 60000);
-          totalArrivalEarlyMinutes += earlyMinutes;
+          const earlyHours = ( (Number(startTime) - Number(checkIn)) / 60000 ) / 60;
+          totalArrivalEarlyHours += earlyHours;
         } else if (checkIn > startTime) {
-          const lateMinutes = Math.round(Number(checkIn) - Number(startTime)) / 60000;
-          totalArrivalLateMinutes += lateMinutes;
+          const lateHours = ( (Number(checkIn) - Number(startTime)) / 60000 ) / 60;
+          totalArrivalLateHours += lateHours;
         }
       }
     });
@@ -408,7 +408,7 @@ export default class StatisticController {
     
     
 
-    return res.json({attendance, totalArrivalEarlyMinutes, totalArrivalLateMinutes})
+    return res.json({attendance, totalArrivalEarlyHours, totalArrivalLateHours})
     
   }
 }

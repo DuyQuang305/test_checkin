@@ -260,7 +260,7 @@ export default class ProfileController {
         return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
       }
       
-      cache.set(`${email}-${type}`, verificationCode, 5 * 60 )
+      cache.set(`${email}-${type}`, verificationCode, 1 * 60 * 60 )
 
       const mailOptions = {
         from: process.env.EMAIL,

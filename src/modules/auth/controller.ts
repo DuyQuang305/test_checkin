@@ -107,7 +107,7 @@ export default class AuthController {
 
       const verificationCode = crypto.randomBytes(3).toString('hex');
 
-      cache.set(`${email}-verify-account`, verificationCode, 5 * 60)
+      cache.set(`${email}-verify-account`, verificationCode, 1 * 60 * 60)
 
       const mailOptions = {
         from: process.env.EMAIL,
@@ -333,9 +333,9 @@ export default class AuthController {
 
   async resendVerificationCode(req: Request, res: Response) {
     try {
-        const {email, type} = req.body
+        const {email, typeCode} = req.body
 
-        if(!type) {
+        if(!typeCode) {
           return createResponse(res, 400, false, 'please enter your type verify code')
         }
 
@@ -350,13 +350,13 @@ export default class AuthController {
         const verificationCode = crypto.randomBytes(3).toString('hex');
 
         
-        const isExistsCode = cache.get(`${email}-${type}`)
+        const isExistsCode = cache.get(`${email}-${typeCode}`)
         
         if (isExistsCode) {
           return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
         }
         
-        cache.set(`${email}-${type}`, verificationCode, 5 * 60 )
+        cache.set(`${email}-${typeCode}`, verificationCode, 1 * 60 * 60 )
 
         const mailOptions = {
           from: process.env.EMAIL,

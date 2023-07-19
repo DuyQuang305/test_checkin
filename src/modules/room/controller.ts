@@ -1,14 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { Room, User, Time } from '../../models';
 
-const transporter = require('../../services/nodeMailer');
 import getIpAddress from '../../services/ipify';
 
 import createResponse from '../../common/function/createResponse';
 
 import checkTime from '../../common/function/checkTime';
-
+import cache from '../../services/cache';
+import crypto from 'crypto';
 require('dotenv').config;
+
+const transporter = require('../../services/nodeMailer');
+const urlServer = process.env.URL_SERVER
+
 
 export default class Controller {
 
@@ -445,18 +449,24 @@ export default class Controller {
     try {
       // chỉ có chủ room mới được mời
       const { roomId } = req.params
-      const { emails } = req.body;
+      const { emails, codeType } = req.body;
       const userId = req.user.id
       const room = await Room.findById(roomId)
        
-      const isMember = room.members.some((id) => {
-        return id = userId
-      })
-
-      if (!isMember && (room.owner != userId) ) {
-        return createResponse(res, 403, false, 'Only the room owner or members in the room have the right to invite others into the room')
+      if (room.owner != userId ) {
+        return createResponse(res, 403, false, 'Only the room owner  have the right to invite others into the room')
       }
 
+      const createLinkJoinRoom = (email) => {
+        const ref = crypto.randomBytes(3).toString('hex');
+
+        cache.set(`${email}-${codeType}`, ref, 1 * 60 * 60)
+
+        const linkJoinRoom = `${urlServer}/room/accept-member/${roomId}?email=${email}&ref=${ref}`
+
+        return linkJoinRoom
+      }
+      
       emails.forEach(async (email) => {
         const user = await User.findOne({email})
 
@@ -473,16 +483,14 @@ export default class Controller {
           template: 'invite-join-room',
           context: {
             username,
-            joinLink: `daylalinkdejoinhihi`
+            joinLink: createLinkJoinRoom(email),
           } 
         };
 
         try {
           await transporter.sendMail(mailOptions);
         } catch (error) {
-          // return createResponse(res, 500, false, error.message)
-          console.log(error.message);
-          
+          return;
         }
       });
 
@@ -577,8 +585,14 @@ export default class Controller {
   async acceptMember(req: Request | any, res: Response, next: NextFunction) {
     try {
       // nhận mã lưu ở cache qua query, có mã phòng
+      const { ref, email } = req.query
       const { roomId } = req.params;
-      const { email } = req.body;
+      
+      const verificationCode = cache.get(`${email}-verify-join-link`)
+
+      if (verificationCode != ref) {
+        return createResponse(res, 400, false, 'Invalid or expired join link')
+      }
 
       const userExists = await User.findOne({ email: email });
 
