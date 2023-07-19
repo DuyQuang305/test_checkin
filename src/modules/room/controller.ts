@@ -22,8 +22,8 @@ export default class Controller {
    *   get:
    *     tags:
    *       - Room
-   *     summary: "Get room and paginate page"
-   *     description: "Get room and paginate page"
+   *     summary: "show room and paginate page"
+   *     description: "show room and paginate page"
    *     security: 
    *       - bearerAuth: []
    *     parameters:
@@ -127,8 +127,8 @@ export default class Controller {
    *   get:
    *     tags:
    *       - Room
-   *     summary: "Get infomation room"
-   *     description: "Get infomation room"
+   *     summary: "Show infomation single room"
+   *     description: "Show infomation room"
    *     security: 
    *       - bearerAuth: []
    *     parameters:
@@ -264,6 +264,11 @@ export default class Controller {
    *               type: string
    *             time:
    *               type: array
+   *               example:
+   *                 - start_time: "2023-07-14T05:00:00.00Z"
+   *                   end_time: "2023-07-14T07:00:00.00Z"
+   *                 - start_time: "2023-07-15T07:00:00.00Z"
+   *                   end_time: "2023-07-15T10:00:00.00Z"
    *     responses:
    *       201:
    *         description: "Successfully"
@@ -377,7 +382,10 @@ export default class Controller {
    *           properties:
    *             emails:
    *               type: array
-   *           example: ["abc@gmail.com", "bce@gmail.com"]
+   *               example: ["abc@gmail.com","xyz@gmail.com"]
+   *             codeType: 
+   *               type: string
+   *               example: "verify-join-link"
    *       - in: path
    *         name: roomId
    *         description: "The room to which the member joins to check in."   
@@ -501,8 +509,8 @@ export default class Controller {
   }
 /**
    * @swagger
-   * /room/add-member/{roomId}:
-   *   put:
+   * /room/accept-member/{roomId}:
+   *   get:
    *     tags:
    *       - Room
    *     summary: "Add member to room Room"
@@ -510,18 +518,24 @@ export default class Controller {
    *     security: 
    *       - bearerAuth: []
    *     parameters:
-   *       - in: body
-   *         name: email
-   *         description: "email to add member"
+   *       - name: roomId
+   *         in: path
+   *         description: The ID of the room to accept a member for.
+   *         required: true
    *         schema:
-   *           type: object
-   *           properties:
-   *             email:
-   *               type: string
-   *               example: "bce@gmail.com"
-   *       - in: path
-   *         name: roomId
-   *         description: "add member to room"    
+   *           type: string
+   *       - name: email
+   *         in: query
+   *         description: The email of the member to accept.
+   *         required: true
+   *         schema:
+   *           type: string
+   *       - name: ref
+   *         in: query
+   *         description: The referral code.
+   *         required: false
+   *         schema:
+   *           type: string
    *     responses:
    *       201:
    *         description: "Successfully"

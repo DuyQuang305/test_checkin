@@ -181,8 +181,6 @@ export default class ProfileController {
    *              example: false
    *             message:
    *              type: string
-   *             data:
-   *              type: object
    */
   async editProfile(
     req: Request | any,
@@ -231,15 +229,79 @@ export default class ProfileController {
     }
   }
 
+  /**
+   * @swagger
+   * /profile/send-verification-change-email:
+   *   post:
+   *     tags:
+   *       - Profile
+   *     summary: "send email verify"
+   *     description: "Verify your request change email using code"
+   *     parameters:
+   *       - in: body
+   *         name: quangnkt1976@gmail.com
+   *         description: "Email to send verification code."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - codeType
+   *             - email
+   *           properties:
+   *             email:
+   *               type: string
+   *             codeType:
+   *               type: string
+   *     responses:
+   *       200:
+   *         description: "Send mail successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "send email failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
+
   async sendMessage(
     req: Request | any,
     res: Response,
     next: NextFunction,
   ): Promise<any> {
     try {
-      const {email, type} = req.body
+      const {email, codeType} = req.body
 
-      if(!type) {
+      if(!codeType) {
         return createResponse(res, 400, false, 'please enter your type verify code')
       }
 
@@ -252,15 +314,14 @@ export default class ProfileController {
       const username = `${user.firstname} ${user.lastname}`
 
       const verificationCode = crypto.randomBytes(3).toString('hex');
-
       
-      const isExistsCode = cache.get(`${email}-${type}`)
+      const isExistsCode = cache.get(`${email}-${codeType}`)
       
       if (isExistsCode) {
         return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
       }
       
-      cache.set(`${email}-${type}`, verificationCode, 1 * 60 * 60 )
+      cache.set(`${email}-${codeType}`, verificationCode, 1 * 60 * 60 )
 
       const mailOptions = {
         from: process.env.EMAIL,

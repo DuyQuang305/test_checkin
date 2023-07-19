@@ -405,9 +405,6 @@ export default class StatisticController {
       }
     });
 
-    
-    
-
     return res.json({attendance, totalArrivalEarlyHours, totalArrivalLateHours})
     
   }

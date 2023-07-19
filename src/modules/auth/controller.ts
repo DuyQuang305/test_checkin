@@ -170,8 +170,8 @@ export default class AuthController {
    *               type: boolean
    *             message:
    *               type: string
-   *             token:
-   *               type: string
+   *             data:
+   *               type: object
    *               description: JWT token for authentication
    *       400:
    *          description: "Log in account failed"
@@ -263,7 +263,7 @@ export default class AuthController {
    *           properties:
    *             statusCode:
    *               type: number
-   *               example: 200
+   *               example: 201
    *             success:
    *               type: boolean
    *             message:
@@ -300,6 +300,7 @@ export default class AuthController {
     try {
       const verificationCode = req.body.verificationCode;
       const email: string = req.query.email;
+
       const user = await User.findOne({ email });
 
       if (!user) {
@@ -330,6 +331,70 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
+
+  /**
+   * @swagger
+   * /auth/resend-verification-code:
+   *   post:
+   *     tags:
+   *       - Auth
+   *     summary: "resend email verify"
+   *     description: "Verify your account/ request change password/ request change email using code"
+   *     parameters:
+   *       - in: body
+   *         name: quangnkt1976@gmail.com
+   *         description: "Email to send verification code."
+   *         schema:
+   *           type: object
+   *           required:
+   *             - codeType
+   *             - email
+   *           properties:
+   *             email:
+   *               type: string
+   *             codeType:
+   *               type: string
+   *     responses:
+   *       200:
+   *         description: "Send mail successfully"
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *               type: number
+   *               example: 200
+   *             success:
+   *               type: boolean
+   *               example: true
+   *             message:
+   *               type: string
+   *       400:
+   *          description: "send email failed"
+   *          schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 400
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   *       500:
+   *         description: "Server internal error "
+   *         schema:
+   *           type: object
+   *           properties:
+   *             statusCode:
+   *              type: number
+   *              example: 500
+   *             success:
+   *              type: boolean
+   *              example: false
+   *             message:
+   *              type: string
+   */
 
   async resendVerificationCode(req: Request, res: Response) {
     try {
