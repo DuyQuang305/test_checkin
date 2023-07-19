@@ -22,10 +22,7 @@ router.patch(
 
 router.post('/send-verification-change-email', jwtGuard, profileController.sendMessage)
 
-router.patch(
-  '/email',
-  jwtGuard,
-  profileController.editEmail,
+router.patch('/email', jwtGuard, profileController.editEmail,
 );
 router.delete('/', jwtGuard, profileController.delete);
 

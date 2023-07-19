@@ -237,20 +237,23 @@ export default class ProfileController {
    *       - Profile
    *     summary: "send email verify"
    *     description: "Verify your request change email using code"
+   *     security:
+   *       - bearerAuth: []
    *     parameters:
-   *       - in: body
-   *         name: quangnkt1976@gmail.com
-   *         description: "Email to send verification code."
-   *         schema:
-   *           type: object
-   *           required:
-   *             - codeType
-   *             - email
-   *           properties:
-   *             email:
-   *               type: string
-   *             codeType:
-   *               type: string
+   *     - in: body
+   *       name: requestBody
+   *       description: The request body for accepting a member.
+   *       required: true
+   *       schema:
+   *         type: object
+   *         required:
+   *           - codeType
+   *           - email
+   *         properties:
+   *           email:
+   *             type: string
+   *           codeType:
+   *             type: string
    *     responses:
    *       200:
    *         description: "Send mail successfully"
