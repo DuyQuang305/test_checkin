@@ -137,6 +137,7 @@ export default class Controller {
    *         description: "The roomId of the room to get infomation room"
    *         schema:
    *           type: string
+   *           example: 64b4ece54f432988ab93f789
    *     responses:
    *       201:
    *         description: "Successfully"
@@ -262,6 +263,7 @@ export default class Controller {
    *           properties:
    *             name:
    *               type: string
+   *               example: Lý thầy Tuân
    *             time:
    *               type: array
    *               example:
@@ -524,18 +526,21 @@ export default class Controller {
    *         required: true
    *         schema:
    *           type: string
+   *           example: 64b4ece54f432988ab93f789
    *       - name: email
    *         in: query
    *         description: The email of the member to accept.
    *         required: true
    *         schema:
    *           type: string
+   *           example: quangnkt1976@gmail.com
    *       - name: ref
    *         in: query
    *         description: The referral code.
    *         required: false
    *         schema:
    *           type: string
+   *           example: 123123
    *     responses:
    *       201:
    *         description: "Successfully"

@@ -371,41 +371,53 @@ export default class StatisticController {
     );
   }
 
-  async lateEarlyArrival(req: Request | any, res: Response): Promise<Object> {
-    const {userId, roomId, month, year} = req.params
+  async statiticTimeWork(req: Request | any, res: Response): Promise<any> {
+    try {
+      const {userId, roomId, month, year} = req.params
 
-    const nextMonth: number = Number(month) + 1
-    const firstMonth: Date = new Date(`${year}-0${month}-01T00:00:00.000Z`) 
-    const endOfMonth: Date = new Date(`${year}-0${nextMonth}-01T00:00:00.000Z`) 
+      const nextMonth: number = Number(month) + 1
+      const firstMonth: Date = new Date(`${year}-0${month}-01T00:00:00.000Z`) 
+      const endOfMonth: Date = new Date(`${year}-0${nextMonth}-01T00:00:00.000Z`) 
 
-    let totalArrivalEarlyHours = 0;
-    let totalArrivalLateHours = 0;
+      let totalArrivalEarlyHours = 0;
+      let totalArrivalLateHours = 0;
+      let totalDepartureEarlyHours = 0;
+      let totalDepartureLateHours = 0;
 
-    const attendance: AttendanceInterface[] = await Attendance.find({
-      room: roomId,
-      user: userId, 
-      checkIn: { $gte: new Date(firstMonth),
-                 $lt: new Date(endOfMonth) }
-    }).populate('time', 'start_time end_time');
+      const attendance: AttendanceInterface[] = await Attendance.find({
+        room: roomId,
+        user: userId, 
+        checkIn: { $gte: new Date(firstMonth),
+                    $lt: new Date(endOfMonth) }
+      }).populate('time', 'start_time end_time');
+      attendance.forEach(attendanceEntry => {
 
-    attendance.forEach(attendanceEntry => {
+        const checkIn = new Date(attendanceEntry.checkIn);
+        const checkOut = new Date(attendanceEntry.checkOut)
+        const startTime = attendanceEntry.time.start_time
+        const endTime = attendanceEntry.time.end_time 
+      
+        if (startTime && endTime) {
+          if (checkIn < startTime) {
+            const earlyArrivalHours = ( (Number(startTime) - Number(checkIn)) / 60000 ) / 60;
+            totalArrivalEarlyHours += earlyArrivalHours;
+          } else if (checkIn > startTime) {
+            const lateArrivalHours = ( (Number(checkIn) - Number(startTime)) / 60000 ) / 60;
+            totalArrivalLateHours += lateArrivalHours;
+          } 
 
-      const checkIn = new Date(attendanceEntry.checkIn);
-      const startTime = attendanceEntry.time.start_time
-      const endTime = attendanceEntry.time.end_time 
-    
-      if (startTime && endTime) {
-        if (checkIn < startTime) {
-          const earlyHours = ( (Number(startTime) - Number(checkIn)) / 60000 ) / 60;
-          totalArrivalEarlyHours += earlyHours;
-        } else if (checkIn > startTime) {
-          const lateHours = ( (Number(checkIn) - Number(startTime)) / 60000 ) / 60;
-          totalArrivalLateHours += lateHours;
+          if ( checkOut < endTime) {
+            const earlyDepartureHours = ( (Number(endTime) - Number(checkOut)) / 60000 ) / 60;
+            totalDepartureEarlyHours += earlyDepartureHours
+          } else if (checkOut > endTime) {
+            const lateDepartureHourse =  ( (Number(checkOut) - Number(endTime)) / 60000 ) / 60;
+            totalDepartureLateHours += lateDepartureHourse
+          }
         }
-      }
-    });
+        return res.json({totalArrivalEarlyHours, totalArrivalLateHours, totalDepartureEarlyHours, totalDepartureLateHours})
+      });
+    } catch(error) {
 
-    return res.json({attendance, totalArrivalEarlyHours, totalArrivalLateHours})
-    
+    }
   }
 }

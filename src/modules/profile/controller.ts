@@ -252,8 +252,10 @@ export default class ProfileController {
    *         properties:
    *           email:
    *             type: string
+   *             example: quangnkt1976@gmail.com
    *           codeType:
    *             type: string
+   *             example: 123123
    *     responses:
    *       200:
    *         description: "Send mail successfully"

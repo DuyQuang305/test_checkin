@@ -24,7 +24,6 @@ export default class AuthController {
    *     description: "Create new user by email and password"
    *     parameters:
    *       - in: body
-   *         name: user
    *         description: "The user to create."
    *         schema:
    *           type: object
@@ -155,8 +154,10 @@ export default class AuthController {
    *           properties:
    *             email:
    *               type: string
+   *               example: quangnkt1976@gmail.com
    *             password:
    *               type: string
+   *               example: duyquanghaha
    *     responses:
    *       200:
    *         description: "Log in successfully"
@@ -250,10 +251,12 @@ export default class AuthController {
    *           properties:
    *             verificationCode:
    *               type: string
+   *               example: 123234
    *       - in: query
    *         name: email
    *         schema:
    *           type: string
+   *           example: quangnkt1976@gmail.com
    *         description: "The email of the user to verify user"
    *     responses:
    *       201:
@@ -352,8 +355,10 @@ export default class AuthController {
    *           properties:
    *             email:
    *               type: string
+   *               example: quangnkt1976@gmail.com
    *             codeType:
    *               type: string
+   *               example: 123123
    *     responses:
    *       200:
    *         description: "Send mail successfully"
@@ -467,12 +472,15 @@ export default class AuthController {
    *           properties:
    *             verificationCode:
    *               type: string
+   *               example: 123123
    *             password:
    *               type: string
+   *               example: duyquang
    *       - in: query
    *         name: email
    *         schema:
    *           type: string
+   *           example: quangnkt1976@gmail.com
    *         description: "The email of the user to change Password"
    *     responses:
    *       201:
