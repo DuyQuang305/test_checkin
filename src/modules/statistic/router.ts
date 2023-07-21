@@ -20,6 +20,6 @@ router.get(
   statisticController.attendanceByRoom,
 );
 
-router.get('/late-early-arrival-by-user/:userId/:roomId/:month/:year', jwtGuard, statisticController.lateEarlyArrival)
+router.get('/time-work-by-month', jwtGuard, statisticController.statiticTimeWorkByMonth)
 
 export default router;

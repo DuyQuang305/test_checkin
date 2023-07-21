@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 
 import createResponse from '../../common/function/createResponse';
 
-import { Attendance } from '../../models';
+import { Attendance, User } from '../../models';
 
 import AttendanceInterface from '../../common/interface/attendance';
 
@@ -371,53 +371,69 @@ export default class StatisticController {
     );
   }
 
-  async statiticTimeWork(req: Request | any, res: Response): Promise<any> {
+  async statiticTimeWorkByMonth(req: Request | any, res: Response): Promise<any> {
     try {
-      const {userId, roomId, month, year} = req.params
+      const { roomId, month, year} = req.query
+
+      const users = await User.find({})
 
       const nextMonth: number = Number(month) + 1
       const firstMonth: Date = new Date(`${year}-0${month}-01T00:00:00.000Z`) 
       const endOfMonth: Date = new Date(`${year}-0${nextMonth}-01T00:00:00.000Z`) 
 
-      let totalArrivalEarlyHours = 0;
-      let totalArrivalLateHours = 0;
-      let totalDepartureEarlyHours = 0;
-      let totalDepartureLateHours = 0;
+      const usersWorkTimeStatistics  = []
 
-      const attendance: AttendanceInterface[] = await Attendance.find({
-        room: roomId,
-        user: userId, 
-        checkIn: { $gte: new Date(firstMonth),
-                    $lt: new Date(endOfMonth) }
-      }).populate('time', 'start_time end_time');
-      attendance.forEach(attendanceEntry => {
+      for (const user of users) {
+        let standardWorkHoursPerMonth: number  = 0;
+        let totalArrivalEarlyHours: number = 0;
+        let totalArrivalLateHours: number = 0;
+        let totalDepartureEarlyHours: number = 0;
+        let totalDepartureLateHours: number = 0;
 
-        const checkIn = new Date(attendanceEntry.checkIn);
-        const checkOut = new Date(attendanceEntry.checkOut)
-        const startTime = attendanceEntry.time.start_time
-        const endTime = attendanceEntry.time.end_time 
-      
-        if (startTime && endTime) {
-          if (checkIn < startTime) {
-            const earlyArrivalHours = ( (Number(startTime) - Number(checkIn)) / 60000 ) / 60;
-            totalArrivalEarlyHours += earlyArrivalHours;
-          } else if (checkIn > startTime) {
-            const lateArrivalHours = ( (Number(checkIn) - Number(startTime)) / 60000 ) / 60;
-            totalArrivalLateHours += lateArrivalHours;
-          } 
-
-          if ( checkOut < endTime) {
-            const earlyDepartureHours = ( (Number(endTime) - Number(checkOut)) / 60000 ) / 60;
-            totalDepartureEarlyHours += earlyDepartureHours
-          } else if (checkOut > endTime) {
-            const lateDepartureHourse =  ( (Number(checkOut) - Number(endTime)) / 60000 ) / 60;
-            totalDepartureLateHours += lateDepartureHourse
+        const attendance: AttendanceInterface[] = await Attendance.find({
+          user: user._id,
+          room: roomId,
+          checkIn: { $gte: new Date(firstMonth),
+                      $lt: new Date(endOfMonth) }
+        }).populate('time', 'start_time end_time');
+        attendance.forEach(attendanceEntry => {
+  
+          const checkIn = new Date(attendanceEntry.checkIn);
+          const checkOut = new Date(attendanceEntry.checkOut)
+          const startTime = attendanceEntry.time?.start_time
+          const endTime = attendanceEntry.time?.end_time 
+         
+          standardWorkHoursPerMonth += ( (Number(endTime) - Number(startTime)) / 60000) / 60 
+          if (startTime && endTime) {
+  
+            if (checkIn < startTime) {
+              const earlyArrivalHours = ( (Number(startTime) - Number(checkIn)) / 60000 ) / 60;
+              totalArrivalEarlyHours += earlyArrivalHours;
+            } else if (checkIn > startTime) {
+              const lateArrivalHours = ( (Number(checkIn) - Number(startTime)) / 60000 ) / 60;
+              totalArrivalLateHours += lateArrivalHours;
+            } 
+  
+            if ( checkOut < endTime) {
+              const earlyDepartureHours = ( (Number(endTime) - Number(checkOut)) / 60000 ) / 60;
+              totalDepartureEarlyHours += earlyDepartureHours
+            } else if (checkOut > endTime) {
+              const lateDepartureHourse =  ( (Number(checkOut) - Number(endTime)) / 60000 ) / 60;
+              totalDepartureLateHours += lateDepartureHourse
+            }
           }
-        }
-        return res.json({totalArrivalEarlyHours, totalArrivalLateHours, totalDepartureEarlyHours, totalDepartureLateHours})
-      });
-    } catch(error) {
+        });
+        
+        const totalTimeWorkHouresPerMonth: number = standardWorkHoursPerMonth - (totalArrivalLateHours + totalDepartureEarlyHours) + totalArrivalEarlyHours + totalDepartureLateHours;
+        usersWorkTimeStatistics.push({userId: user._id,firstname: user.firstname,lastname: user.lastname, totalArrivalEarlyHours, totalArrivalLateHours, totalDepartureEarlyHours, totalDepartureLateHours, standardWorkHoursPerMonth, totalTimeWorkHouresPerMonth});
+      }
 
+      usersWorkTimeStatistics.sort((a,b) => b.totalTimeWorkHouresPerMonth - a.totalTimeWorkHouresPerMonth)
+
+      return createResponse(res, 200, true, 'The list of users has been sorted in descending order based on total working time', usersWorkTimeStatistics)
+
+    } catch(error) {
+      return createResponse(res, 500, false, error.message)
     }
   }
 }

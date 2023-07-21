@@ -223,6 +223,10 @@ export default class Controller {
       const room = await Room.findById(roomId)
                               .populate('owner', 'firstname lastname')
                               .populate('members', 'firstname lastname')
+
+      if (!room) {
+        return createResponse(res, 400, false, 'room not found')
+      }
       
       const isMember = room.members.some(member => {
         return member._id = user
