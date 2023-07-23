@@ -106,7 +106,7 @@ export default class AuthController {
 
       const verificationCode = crypto.randomBytes(3).toString('hex');
 
-      cache.set(`${email}-verify-account`, verificationCode, 1 * 60 * 60)
+      cache.set(`${email}-verify-account`, verificationCode, 3 * 60 * 60)
 
       const mailOptions = {
         from: process.env.EMAIL,
@@ -308,27 +308,31 @@ export default class AuthController {
 
       if (!user) {
         return createResponse(res, 404, false, 'User not found');
+      } 
+
+      if (user.isVerify == true) {
+        return createResponse(res,400, false, 'Your account have verified')
+      }
+
+      if (verificationCode == cache.get(`${email}-verify-account`)) {
+        user.isVerify = true;
+        await user.save();
+
+        cache.del(`${email}-verify-account`)
+
+        return createResponse(
+          res,
+          201,
+          true,
+          'Account verification successful',
+        );
       } else {
-        if (verificationCode == cache.get(`${email}-verify-account`)) {
-          user.isVerify = true;
-          await user.save();
-
-          cache.del(`${email}-verify-account`)
-
-          return createResponse(
-            res,
-            201,
-            true,
-            'Account verification successful',
-          );
-        } else {
-          return createResponse(
-            res,
-            400,
-            false,
-            'The verification code you entered is invalid. Please check the code and try again',
-          );
-        }
+        return createResponse(
+          res,
+          400,
+          false,
+          'The verification code you entered is invalid. Please check the code and try again',
+        );
       }
     } catch (error) {
       return createResponse(res, 500, false, error.message);
