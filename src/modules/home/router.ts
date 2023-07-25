@@ -2,7 +2,7 @@ import express from 'express';
 
 import HomeController from './controller';
 
-import { jwtGuard } from '../../middlewares/jwtGuard';
+import { jwtGuard } from '../../middlewares/guard';
 import roleGuard from '../../middlewares/roleGuard';
 
 const router = express.Router();

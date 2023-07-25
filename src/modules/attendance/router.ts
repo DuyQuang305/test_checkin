@@ -2,7 +2,7 @@ import express from 'express';
 
 import AttendanceController from './controller';
 
-import { jwtGuard } from '../../middlewares/jwtGuard';
+import { jwtGuard } from '../../middlewares/guard';
 
 const attendanceController = new AttendanceController();
 

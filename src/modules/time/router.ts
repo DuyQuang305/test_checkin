@@ -1,6 +1,6 @@
 import express from 'express';
 import TimeController from './controller';
-import { jwtGuard } from '../../middlewares/jwtGuard';
+import { jwtGuard } from '../../middlewares/guard';
 
 const router = express.Router();
 

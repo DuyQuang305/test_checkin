@@ -2,8 +2,7 @@ import passport from 'passport';
 import passportJWT from 'passport-jwt';
 
 import { User } from '../models/user';
-
-export default function JWTStrategy() {
+ 
   const ExtractJwt = passportJWT.ExtractJwt;
   const JwtStrategy = passportJWT.Strategy;
   const jwtOptions: any = {};
@@ -36,4 +35,5 @@ export default function JWTStrategy() {
       return null;
     }
   }
-}
+
+  module.exports = passport

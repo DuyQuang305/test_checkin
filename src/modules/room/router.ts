@@ -1,7 +1,7 @@
 import express from 'express';
 
 // import Validation from '../../middlewares/Validation';
-import { jwtGuard } from '../../middlewares/jwtGuard';
+import { jwtGuard } from '../../middlewares/guard';
 import RoomController from './controller';
 
 const router = express.Router();

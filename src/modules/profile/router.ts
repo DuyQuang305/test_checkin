@@ -4,7 +4,7 @@ import ProfileController from './controller';
 import userSchema from './validations/user';
 
 import Validation from '../../middlewares/validation';
-import { jwtGuard } from '../../middlewares/jwtGuard';
+import { jwtGuard } from '../../middlewares/guard';
 const upload = require('../../middlewares/upload');
 
 const router = express.Router();

@@ -2,13 +2,17 @@ import express from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import cors from 'cors';
-import passport from 'passport';
 
 import Module from './modules';
-import JWTStrategy from './services/passport';
 import connect from './common/database';
 import swaggerDocs from './common/swagger';
-dotenv.config();
+
+const passportLocal = require('./services/passport');
+const passportFacebook = require('./services/passportFacebook')
+const passportGoogle = require('./services/passportGoogle')
+const session = require('express-session');
+
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -38,9 +42,16 @@ app.use(
 const initModule = new Module(app);
 initModule.main();
 
-// Use passport
-JWTStrategy();
-app.use(passport.initialize());
+app.use(cookieParser());
+app.use(session({
+  secret: '122323232',
+  resave: false,
+  saveUninitialized: false
+}));
+
+app.use(passportLocal.initialize());
+app.use(passportFacebook.initialize());
+app.use(passportGoogle.initialize());
 
 // Swagger docs
 

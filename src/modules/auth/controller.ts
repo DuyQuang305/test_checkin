@@ -1,5 +1,5 @@
-import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import { NextFunction, Request, response, Response } from 'express';
+import jwt, { sign } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
@@ -11,6 +11,7 @@ import createResponse from '../../common/function/createResponse';
 
 import cache from '../../services/cache';
 import { create } from 'express-handlebars';
+import { AnyObject } from 'yup';
 const transporter = require('../../services/nodeMailer');
 
 export default class AuthController {
@@ -119,6 +120,8 @@ export default class AuthController {
         }
       }  
 
+      createResponse(res, 201, true, 'Created user successfully, please check your email to verify account');
+      
       try {
         await transporter.sendMail(mailOptions);
         console.log('send mail success');
@@ -127,7 +130,6 @@ export default class AuthController {
         return createResponse(res, 500, false, 'Send mail failed, please try again!')
       }
 
-      return createResponse(res, 201, true, 'Created user successfully, please check your email to verify account');
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
@@ -230,6 +232,39 @@ export default class AuthController {
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
+  }
+
+  async loginGoogle (req: Request | any, res: Response) {
+    try {
+      const user = req.user
+      const firstname = user._json.given_name;
+      const lastname = user._json.family_name;
+      const avatar = user._json.picture
+      const email = user._json.email
+      const authGoogleId = user.id
+      const isVerify = true
+      
+      const isExistsUser = await User.findOne({email})
+  
+      if (!isExistsUser) {
+        const user = new User({firstname, lastname, avatar,email, authGoogleId, isVerify})
+        
+        await user.save()
+      }
+
+      const payload = user._json
+      const accessToken = jwt.sign(payload, process.env.JWT_SECRET,  { expiresIn: '7d' })
+      return createResponse(res, 200, true, 'Login with google successfully', {accessToken} )
+    } catch (error) {
+      createResponse(res, 500, false, error.message)
+    }
+  }
+
+  
+  async loginFacebook (req: Request | any, res: Response) {
+    const user = req.user
+
+    return res.json({user})
   }
 
   /**
@@ -560,17 +595,25 @@ export default class AuthController {
   }
 
   async refreshToken(req: Request, res: Response) {
-    const refreshToken = req.body.refreshToken;
     try {
-      const verifyToken: any = jwt.verify(refreshToken, process.env.JWT_SECRET);
+      if (!req.cookies && !req.cookies.jwt) {
+        return createResponse(res, 401, false,'Unauthorized')
+      }
+      
+      const refreshToken = req.cookies.jwt;
 
-      const token = await signToken(
-        res,
-        verifyToken.id,
-        verifyToken.email,
-        refreshToken,
-      );
-      return token;
+      const decodedToken = jwt.verify(refreshToken, process.env.JWT_SECRET)
+      
+      if (!decodedToken) {
+        return createResponse(res, 406, false, 'Unauthorized')
+      }
+
+      decodedToken
+
+      return;
+
+
+
     } catch (error) {
       return createResponse(res, 500, false, error.message);
     }
@@ -580,41 +623,20 @@ export default class AuthController {
 // Create JWT
 export async function signToken(
   res: Response,
-  id: object,
+  id: object | string,
   email: string,
-  refreshToken?: string,
-): Promise<Token | object | void> {
+): Promise<any> {
   const payload = { id, email };
 
-  const access_token = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '7d',
+  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: '20m',
   });
-  const refresh_token = jwt.sign(payload, process.env.JWT_SECRET);
+  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '4d'});
 
-  if (refreshToken) {
-    const refreshTokenExists = await User.findOne({
-      token: refreshToken,
-    });
-    if (refreshTokenExists) {
-      await User.updateOne(
-        { _id: refreshTokenExists.id },
-        {
-          token: refresh_token,
-        },
-      );
-    } else {
-      return createResponse(res, 400, false, 'Invalid Token');
-    }
-  } else {
-    await User.updateOne(
-      { _id: id },
-      {
-        token: refresh_token,
-      },
-    );
-  }
+  res.cookie('jwt', refreshToken, { httpOnly: true, 
+                                    sameSite: 'none' as const, secure: true,
+                                    maxAge: 24 * 60 * 60 * 1000 })
   return createResponse(res, 200, true, 'Login successfully', {
-    access_token,
-    refresh_token,
+    accessToken
   });
 }
