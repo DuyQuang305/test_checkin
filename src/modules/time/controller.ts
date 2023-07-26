@@ -9,7 +9,49 @@ import { Time } from '../../models/time';
 import { Room } from '../../models/room';
 
 export default class TimeController {
+  async showTimeByRoom(
+    req: Request,
+    res: Response,
+    next,
+  ): Promise<any> {
+    try {
+      const { roomId } = req.params;
 
+      const room = Room.findById(roomId);
+      const time = Time.find({ room: roomId });
+
+      const allPromise = Promise.all([room, time]);
+      // xong rồi nha hahaa
+      try {
+        const [room, time] = await allPromise;
+
+        if (!room) {
+          return createResponse(res, 400, false, 'Room not found');
+        }
+
+        if (!time) {
+          return createResponse(
+            res,
+            400,
+            false,
+            'There is no schedule for this meeting room yet.',
+          );
+        }
+
+        createResponse(
+          res,
+          200,
+          true,
+          'This is the schedule of this meeting room',
+          time,
+        );
+      } catch (error) {
+        next(error);
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
   /**
    * @swagger
    * /time/add-time/{roomId}:
