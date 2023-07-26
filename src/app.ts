@@ -19,6 +19,7 @@ const app = express();
 connect();
 
 // Middleware for all method
+app.use(cookieParser());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -36,13 +37,12 @@ app.use(
       },
     },
   }),
-);
+  );
 
 //Module init
 const initModule = new Module(app);
 initModule.main();
 
-app.use(cookieParser());
 app.use(session({
   secret: '122323232',
   resave: false,

@@ -1,4 +1,4 @@
-import { NextFunction, Request, response, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import jwt, { sign } from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
@@ -80,7 +80,7 @@ export default class AuthController {
    *             message:
    *               type: string
    */
-  async register(req: Request, res: Response) {
+  async register(req: Request, res: Response, next: NextFunction) {
     try {
       const { firstname, lastname, email, password } = req.body;
 
@@ -127,11 +127,11 @@ export default class AuthController {
         console.log('send mail success');
         
       } catch (error) {
-        return createResponse(res, 500, false, 'Send mail failed, please try again!')
+        next(error)
       }
 
     } catch (error) {
-      return createResponse(res, 500, false, error.message);
+      next(error)
     }
   }
 
@@ -204,7 +204,7 @@ export default class AuthController {
    *              type: string
    */
 
-  async login(req: Request, res: Response) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
       const user = await User.findOne({ email: email });
@@ -227,14 +227,42 @@ export default class AuthController {
         );
       }
 
-      const token = await signToken(res, user.id, user.email);
-      return token;
+      const accessToken = await signToken(res, user.id, user.email);
+      
+      createResponse(res, 200, true, 'Login successfully', accessToken)
     } catch (error) {
-      return createResponse(res, 500, false, error.message);
+      next(error)
     }
   }
 
-  async loginGoogle (req: Request | any, res: Response) {
+  async refreshToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.cookies && !req.cookies.jwt) {
+        return createResponse(res, 401, false,'Unauthorized')
+      }
+      
+      const refreshToken = req.cookies.jwt;
+
+      const decodedToken: any = jwt.verify(refreshToken, process.env.JWT_SECRET)
+      
+      if (!decodedToken) {
+        return createResponse(res, 406, false, 'Unauthorized')
+      }
+
+      const id: string = decodedToken.id
+      const email: string = decodedToken.email
+
+      const accessToken = await signToken(res, id, email)
+
+      createResponse(res, 200, true, 'Login successfully', accessToken)
+
+    } catch (error) {
+      next(error)
+    }
+  }
+
+
+  async loginGoogle (req: any, res: Response, next: NextFunction) {
     try {
       const user = req.user
       const firstname = user._json.given_name;
@@ -242,29 +270,62 @@ export default class AuthController {
       const avatar = user._json.picture
       const email = user._json.email
       const authGoogleId = user.id
+      const authType = 'gooogle'
       const isVerify = true
       
       const isExistsUser = await User.findOne({email})
   
       if (!isExistsUser) {
-        const user = new User({firstname, lastname, avatar,email, authGoogleId, isVerify})
+        const user = new User({firstname, lastname, avatar,email, authType ,authGoogleId, isVerify})
         
         await user.save()
       }
 
       const payload = user._json
       const accessToken = jwt.sign(payload, process.env.JWT_SECRET,  { expiresIn: '7d' })
-      return createResponse(res, 200, true, 'Login with google successfully', {accessToken} )
+
+      createResponse(res, 200, true, 'Login with google successfully', {accessToken} )
     } catch (error) {
-      createResponse(res, 500, false, error.message)
+      next(error)
     }
   }
 
   
-  async loginFacebook (req: Request | any, res: Response) {
-    const user = req.user
+  async loginFacebook (req: Request | any, res: Response, next: NextFunction) {
 
-    return res.json({user})
+    try{
+      const profile = req.user
+      const nameParts = profile.displayName.split(" ");
+      const firstname = nameParts[0];
+      const lastname = nameParts[nameParts.length - 1];
+      const authType = 'facebook'
+      const authFacebookId = profile.id
+      const avatar = profile.photos
+      const isVerify = true
+
+      const user = await User.findOne({authFacebookId})
+
+      if (!user) {
+        const user = new User (
+            {
+            firstname,
+            lastname,
+            authType,
+            authFacebookId, 
+            avatar,
+            isVerify
+            }
+        )
+        await user.save()
+
+        const accessToken = jwt.sign({authFacebookId}, process.env.JWT_SECRET,  { expiresIn: '7d' })
+        
+        createResponse(res, 200, true, 'Login with facebook successfully', {accessToken} )
+      }
+    } catch(error) {
+      next(error)
+    }
+
   }
 
   /**
@@ -334,7 +395,7 @@ export default class AuthController {
    *              type: string
    */
 
-  async verifyUserByCode(req: Request | any, res: Response) {
+  async verifyUserByCode(req: Request | any, res: Response, next: NextFunction) {
     try {
       const verificationCode = req.body.verificationCode;
       const email: string = req.query.email;
@@ -370,7 +431,7 @@ export default class AuthController {
         );
       }
     } catch (error) {
-      return createResponse(res, 500, false, error.message);
+      next(error)
     }
   }
 
@@ -440,7 +501,7 @@ export default class AuthController {
    *              type: string
    */
 
-  async resendVerificationCode(req: Request, res: Response) {
+  async resendVerificationCode(req: Request, res: Response, next: NextFunction) {
     try {
         const {email, typeCode} = req.body
 
@@ -487,7 +548,7 @@ export default class AuthController {
     return createResponse(res, 200, true, 'Send mail successfully, please check your email to verify account');
     
   } catch (error) {
-    return createResponse(res, 500, false, error.message)
+    next(error)
   }
 }
 
@@ -562,7 +623,7 @@ export default class AuthController {
    *              type: string
    */
 
-  async resetPassword(req: Request | any, res: Response): Promise<object> {
+  async resetPassword(req: Request | any, res: Response, next: NextFunction): Promise<object> {
     try {
       const { email } = req.query;
       const { password,  verificationCode} = req.body;
@@ -594,37 +655,13 @@ export default class AuthController {
     }
   }
 
-  async refreshToken(req: Request, res: Response) {
-    try {
-      if (!req.cookies && !req.cookies.jwt) {
-        return createResponse(res, 401, false,'Unauthorized')
-      }
-      
-      const refreshToken = req.cookies.jwt;
-
-      const decodedToken = jwt.verify(refreshToken, process.env.JWT_SECRET)
-      
-      if (!decodedToken) {
-        return createResponse(res, 406, false, 'Unauthorized')
-      }
-
-      decodedToken
-
-      return;
-
-
-
-    } catch (error) {
-      return createResponse(res, 500, false, error.message);
-    }
-  }
 }
 
 // Create JWT
 export async function signToken(
   res: Response,
-  id: object | string,
-  email: string,
+  id:  any,
+  email: any,
 ): Promise<any> {
   const payload = { id, email };
 
@@ -636,7 +673,5 @@ export async function signToken(
   res.cookie('jwt', refreshToken, { httpOnly: true, 
                                     sameSite: 'none' as const, secure: true,
                                     maxAge: 24 * 60 * 60 * 1000 })
-  return createResponse(res, 200, true, 'Login successfully', {
-    accessToken
-  });
+  return accessToken
 }

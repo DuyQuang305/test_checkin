@@ -7,7 +7,8 @@ const url = process.env.URL_SERVER
 passport.use(new FacebookStrategy({
     clientID: '664981345662920',
     clientSecret: 'e61328ae7754ded2ee243dca519ea0db',
-    callbackURL: `${url}/auth/facebook/callback`
+    callbackURL: `${url}/auth/facebook/callback`,
+    profileFields: ['id', 'displayName', 'photos', 'email']
     },
 
     function(accessToken, refreshToken, profile, cb) {
