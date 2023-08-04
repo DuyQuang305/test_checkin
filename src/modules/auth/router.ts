@@ -14,8 +14,8 @@ router.post('/register', Validation(schemaValidation.Register), authController.r
 
 router.post('/login', Validation(schemaValidation.Login), authController.login);
 router.get('/google', googleGuardSuccess)
-router.get('/facebook', facebookGuardSuccess)
 router.get('/google/callback', googleGuardFailed, authController.loginGoogle)
+router.get('/facebook', facebookGuardSuccess)
 router.get('/facebook/callback', facebookGuardFailed, authController.loginFacebook)
 
 router.post('/refresh', authController.refreshToken);

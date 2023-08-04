@@ -6,6 +6,9 @@ import statisticRouter from './statistic/router';
 import roomRouter from './room/router';
 import timeRouter from './time/router';
 
+import errorHandler from '../middlewares/errorHandler';
+
+
 export default class Module {
   protected app: any;
   constructor(app: any) {
@@ -20,5 +23,7 @@ export default class Module {
     await this.app.use('/statistic', statisticRouter);
     await this.app.use('/time', timeRouter);
     await this.app.use('/', homeRouter);
+
+    await this.app.use(errorHandler)
   }
 }

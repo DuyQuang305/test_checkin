@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import jwt, { sign } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
@@ -8,10 +8,9 @@ import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { User } from '../../models';
 
 import createResponse from '../../common/function/createResponse';
-
+import signToken from '../../common/function/createToken';
 import cache from '../../services/cache';
-import { create } from 'express-handlebars';
-import { AnyObject } from 'yup';
+
 const transporter = require('../../services/nodeMailer');
 
 export default class AuthController {
@@ -207,13 +206,14 @@ export default class AuthController {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const user = await User.findOne({ email: email });
+      const user = await User.findOne({ email});
 
       if (!user) {
         return createResponse(res, 400, false, 'Invalid email');
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
+
       if (!isPasswordValid) {
         return createResponse(res, 400, false, 'Invalid password');
       }
@@ -227,7 +227,7 @@ export default class AuthController {
         );
       }
 
-      const accessToken = await signToken(res, user.id, user.email);
+      const accessToken = await signToken(res, user._id, user.email);
       
       createResponse(res, 200, true, 'Login successfully', accessToken)
     } catch (error) {
@@ -237,12 +237,13 @@ export default class AuthController {
 
   async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      if (!req.cookies && !req.cookies.jwt) {
+
+      const refreshToken = req.cookies.jwt
+
+      if (!refreshToken) {
         return createResponse(res, 401, false,'Unauthorized')
       }
       
-      const refreshToken = req.cookies.jwt;
-
       const decodedToken: any = jwt.verify(refreshToken, process.env.JWT_SECRET)
       
       if (!decodedToken) {
@@ -252,9 +253,9 @@ export default class AuthController {
       const id: string = decodedToken.id
       const email: string = decodedToken.email
 
-      const accessToken = await signToken(res, id, email)
+      const newAccessToken = await signToken(res, id, email)
 
-      createResponse(res, 200, true, 'Login successfully', accessToken)
+      createResponse(res, 200, true, 'Login successfully', {newAccessToken})
 
     } catch (error) {
       next(error)
@@ -317,11 +318,10 @@ export default class AuthController {
             }
         )
         await user.save()
-
-        const accessToken = jwt.sign({authFacebookId}, process.env.JWT_SECRET,  { expiresIn: '7d' })
-        
-        createResponse(res, 200, true, 'Login with facebook successfully', {accessToken} )
       }
+      
+      const accessToken = jwt.sign({authFacebookId}, process.env.JWT_SECRET,  { expiresIn: '7d' })
+      createResponse(res, 200, true, 'Login with facebook successfully', {accessToken} )
     } catch(error) {
       next(error)
     }
@@ -655,23 +655,4 @@ export default class AuthController {
     }
   }
 
-}
-
-// Create JWT
-export async function signToken(
-  res: Response,
-  id:  any,
-  email: any,
-): Promise<any> {
-  const payload = { id, email };
-
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: '20m',
-  });
-  const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '4d'});
-
-  res.cookie('jwt', refreshToken, { httpOnly: true, 
-                                    sameSite: 'none' as const, secure: true,
-                                    maxAge: 24 * 60 * 60 * 1000 })
-  return accessToken
 }

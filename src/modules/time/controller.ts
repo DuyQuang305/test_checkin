@@ -21,7 +21,7 @@ export default class TimeController {
       const time = Time.find({ room: roomId });
 
       const allPromise = Promise.all([room, time]);
-      // xong rồi nha hahaa
+      
       try {
         const [room, time] = await allPromise;
 
