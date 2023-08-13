@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
 import { User } from '../../models';
-import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { Message } from '../../common/constant/message';
 
 import createResponse from '../../common/function/createResponse';
@@ -196,7 +195,7 @@ export default class ProfileController {
       const user = await User.findById(req.user.id);
 
       if (password) {
-        hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
+        hashedPassword = await bcrypt.hash(password, 10);
       } else if (req.file) {
         if (user.avatar) {
           removeExistsFile(user.avatar);

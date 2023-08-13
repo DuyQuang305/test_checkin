@@ -3,8 +3,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 
-import Token from '../../common/interface/token';
-import { SECRET_ROUNDS } from '../../common/constant/secret';
 import { User } from '../../models';
 
 import createResponse from '../../common/function/createResponse';
@@ -89,7 +87,7 @@ export default class AuthController {
         return createResponse(res, 400, false, 'Email is already in use');
       }
 
-      const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
+      const hashedPassword = await bcrypt.hash(password, 10);
 
       const user = await new User({
         firstname,
@@ -641,7 +639,7 @@ export default class AuthController {
       }
 
       try {
-        const hashedPassword = await bcrypt.hash(password, SECRET_ROUNDS);
+        const hashedPassword = await bcrypt.hash(password, 10);
         user.password = await hashedPassword;
         await user.save();
         cache.del(`${email}-verify-password`)
