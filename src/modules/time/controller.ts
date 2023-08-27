@@ -153,9 +153,9 @@ export default class TimeController {
 
       const owner = room.owner.toString();
 
-     if (user !== owner) {
-      return createResponse(res, 403, false, 'To create a room, the user must be the owner of the room.')
-     }
+    //  if (user !== owner) {
+    //   return createResponse(res, 403, false, 'To add time, the user must be the owner of the room.')
+    //  }
 
       const errorMessages = await checkTime(time);
       if (errorMessages.length > 0) {

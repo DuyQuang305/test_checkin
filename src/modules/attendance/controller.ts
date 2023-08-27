@@ -115,7 +115,7 @@ export default class AttendanceController {
         return (member = user);
       });
 
-      if (!isMember && room.owner != user) {
+      if (!isMember ||  room.owner != user) {
         return createResponse(
           res,
           403,
@@ -124,14 +124,14 @@ export default class AttendanceController {
         );
       }
 
-      if (clientIp !== room.allowed_ip) {
-        return createResponse(
-          res,
-          400,
-          false,
-          'Your IP address is not allowed to access this meeting room',
-        );
-      }
+      // if (clientIp !== room.allowed_ip) {
+      //   return createResponse(
+      //     res,
+      //     400,
+      //     false,
+      //     'Your IP address is not allowed to access this meeting room',
+      //   );
+      // }
       const now: Date = new Date();
       const attendanceResult = await attendance();
 
@@ -286,14 +286,14 @@ export default class AttendanceController {
 
       const room = await Room.findById(roomId);
 
-      if (clientIp !== room.allowed_ip) {
-        return createResponse(
-          res,
-          400,
-          false,
-          'Your IP address is not allowed to access this meeting room',
-        );
-      }
+      // if (clientIp !== room.allowed_ip) {
+      //   return createResponse(
+      //     res,
+      //     400,
+      //     false,
+      //     'Your IP address is not allowed to access this meeting room',
+      //   );
+      // }
 
       const now: Date = new Date();
       const attendanceResult = await attendance();

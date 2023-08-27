@@ -7,7 +7,7 @@ const attendanceSchema = new Schema({
   checkOut: { type: Date },
   user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   room: { type: Schema.Types.ObjectId, ref: 'Room', required: true },
-  time: { type: Schema.Types.ObjectId, ref: 'Time', required: true }
+  time: { type: Schema.Types.ObjectId, ref: 'Time', required: true },
 });
 
 export const Attendance = mongoose.model('Attendance', attendanceSchema);

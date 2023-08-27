@@ -12,7 +12,7 @@ import cache from '../../services/cache';
 const transporter = require('../../services/nodeMailer');
 
 export default class AuthController {
-  /**
+  /**s
    * @swagger
    * /auth/register:
    *   post:
@@ -96,15 +96,15 @@ export default class AuthController {
         password: hashedPassword,
       }).save();
 
-      if(!user) {
-        return createResponse(res, 400, false, 'Create user failed')
+      if (!user) {
+        return createResponse(res, 400, false, 'Create user failed');
       }
 
-      const username = `${firstname} ${lastname}`
+      const username = `${firstname} ${lastname}`;
 
       const verificationCode = crypto.randomBytes(3).toString('hex');
 
-      cache.set(`${email}-verify-account`, verificationCode, 3 * 60 * 60)
+      cache.set(`${email}-verify-account`, verificationCode, 3 * 60 * 60);
 
       const mailOptions = {
         from: process.env.EMAIL,
@@ -114,21 +114,24 @@ export default class AuthController {
         context: {
           verificationCode,
           username,
-        }
-      }  
+        },
+      };
 
-      createResponse(res, 201, true, 'Created user successfully, please check your email to verify account');
-      
+      createResponse(
+        res,
+        201,
+        true,
+        'Created user successfully, please check your email to verify account',
+      );
+
       try {
         await transporter.sendMail(mailOptions);
         console.log('send mail success');
-        
       } catch (error) {
-        next(error)
+        next(error);
       }
-
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
@@ -204,7 +207,7 @@ export default class AuthController {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
-      const user = await User.findOne({ email});
+      const user = await User.findOne({ email });
 
       if (!user) {
         return createResponse(res, 400, false, 'Invalid email');
@@ -226,104 +229,115 @@ export default class AuthController {
       }
 
       const accessToken = await signToken(res, user._id, user.email);
-      
-      createResponse(res, 200, true, 'Login successfully', accessToken)
+
+      createResponse(res, 200, true, 'Login successfully', accessToken);
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
   async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-
-      const refreshToken = req.cookies.jwt
+      const refreshToken = req.cookies.jwt;
 
       if (!refreshToken) {
-        return createResponse(res, 401, false,'Unauthorized')
+        return createResponse(res, 401, false, 'Unauthorized');
       }
-      
-      const decodedToken: any = jwt.verify(refreshToken, process.env.JWT_SECRET)
-      
+
+      const decodedToken: any = jwt.verify(
+        refreshToken,
+        process.env.JWT_SECRET,
+      );
+
       if (!decodedToken) {
-        return createResponse(res, 406, false, 'Unauthorized')
+        return createResponse(res, 406, false, 'Unauthorized');
       }
 
-      const id: string = decodedToken.id
-      const email: string = decodedToken.email
+      const id: string = decodedToken.id;
+      const email: string = decodedToken.email;
 
-      const newAccessToken = await signToken(res, id, email)
+      const newAccessToken = await signToken(res, id, email);
 
-      createResponse(res, 200, true, 'Login successfully', {newAccessToken})
-
+      createResponse(res, 200, true, 'Login successfully', newAccessToken);
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
-
-  async loginGoogle (req: any, res: Response, next: NextFunction) {
+  async loginGoogle(req: any, res: Response, next: NextFunction) {
     try {
-      const user = req.user
+      const user = req.user;
       const firstname = user._json.given_name;
       const lastname = user._json.family_name;
-      const avatar = user._json.picture
-      const email = user._json.email
-      const authGoogleId = user.id
-      const authType = 'gooogle'
-      const isVerify = true
-      
-      const isExistsUser = await User.findOne({email})
-  
+      const avatar = user._json.picture;
+      const email = user._json.email;
+      const authGoogleId = user.id;
+      const authType = 'gooogle';
+      const isVerify = true;
+
+      const isExistsUser = await User.findOne({ email });
+
       if (!isExistsUser) {
-        const user = new User({firstname, lastname, avatar,email, authType ,authGoogleId, isVerify})
-        
-        await user.save()
+        const user = new User({
+          firstname,
+          lastname,
+          avatar,
+          email,
+          authType,
+          authGoogleId,
+          isVerify,
+        });
+
+        await user.save();
       }
 
-      const payload = user._json
-      const accessToken = jwt.sign(payload, process.env.JWT_SECRET,  { expiresIn: '7d' })
+      const payload = user._json;
+      const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: '7d',
+      });
 
-      createResponse(res, 200, true, 'Login with google successfully', {accessToken} )
+      createResponse(res, 200, true, 'Login with google successfully', {
+        accessToken,
+      });
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
-  
-  async loginFacebook (req: Request | any, res: Response, next: NextFunction) {
-
-    try{
-      const profile = req.user
-      const nameParts = profile.displayName.split(" ");
+  async loginFacebook(req: Request | any, res: Response, next: NextFunction) {
+    try {
+      const profile = req.user;
+      const nameParts = profile.displayName.split(' ');
       const firstname = nameParts[0];
       const lastname = nameParts[nameParts.length - 1];
-      const authType = 'facebook'
-      const authFacebookId = profile.id
-      const avatar = profile.photos
-      const isVerify = true
+      const authType = 'facebook';
+      const authFacebookId = profile.id;
+      const avatar = profile.photos;
+      const isVerify = true;
 
-      const user = await User.findOne({authFacebookId})
+      const user = await User.findOne({ authFacebookId });
 
       if (!user) {
-        const user = new User (
-            {
-            firstname,
-            lastname,
-            authType,
-            authFacebookId, 
-            avatar,
-            isVerify
-            }
-        )
-        await user.save()
+        const user = new User({
+          firstname,
+          lastname,
+          authType,
+          authFacebookId,
+          avatar,
+          isVerify,
+        });
+        await user.save();
       }
-      
-      const accessToken = jwt.sign({authFacebookId}, process.env.JWT_SECRET,  { expiresIn: '7d' })
-      createResponse(res, 200, true, 'Login with facebook successfully', {accessToken} )
-    } catch(error) {
-      next(error)
-    }
 
+      const accessToken = jwt.sign({ authFacebookId }, process.env.JWT_SECRET, {
+        expiresIn: '7d',
+      });
+      createResponse(res, 200, true, 'Login with facebook successfully', {
+        accessToken,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
 
   /**
@@ -393,7 +407,11 @@ export default class AuthController {
    *              type: string
    */
 
-  async verifyUserByCode(req: Request | any, res: Response, next: NextFunction) {
+  async verifyUserByCode(
+    req: Request | any,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
       const verificationCode = req.body.verificationCode;
       const email: string = req.query.email;
@@ -402,17 +420,17 @@ export default class AuthController {
 
       if (!user) {
         return createResponse(res, 404, false, 'User not found');
-      } 
+      }
 
       if (user.isVerify == true) {
-        return createResponse(res,400, false, 'Your account have verified')
+        return createResponse(res, 400, false, 'Your account have verified');
       }
 
       if (verificationCode == cache.get(`${email}-verify-account`)) {
         user.isVerify = true;
         await user.save();
 
-        cache.del(`${email}-verify-account`)
+        cache.del(`${email}-verify-account`);
 
         return createResponse(
           res,
@@ -429,7 +447,7 @@ export default class AuthController {
         );
       }
     } catch (error) {
-      next(error)
+      next(error);
     }
   }
 
@@ -499,56 +517,78 @@ export default class AuthController {
    *              type: string
    */
 
-  async resendVerificationCode(req: Request, res: Response, next: NextFunction) {
+  async resendVerificationCode(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) {
     try {
-        const {email, typeCode} = req.body
+      const { email, typeCode } = req.body;
 
-        if(!typeCode) {
-          return createResponse(res, 400, false, 'please enter your type verify code')
-        }
+      if (!typeCode) {
+        return createResponse(
+          res,
+          400,
+          false,
+          'please enter your type verify code',
+        );
+      }
 
-        const user = await User.findOne({email})
+      const user = await User.findOne({ email });
 
-        if(!user) {
-          return createResponse(res, 400, false, 'User not found')
-        }
+      if (!user) {
+        return createResponse(res, 400, false, 'User not found');
+      }
 
-        const username = `${user.firstname} ${user.lastname}`
+      const username = `${user.firstname} ${user.lastname}`;
 
-        const verificationCode = crypto.randomBytes(3).toString('hex');
+      const verificationCode = crypto.randomBytes(3).toString('hex');
 
-        
-        const isExistsCode = cache.get(`${email}-${typeCode}`)
-        
-        if (isExistsCode) {
-          return createResponse(res, 400, false, 'You have sent too many requests in a short period of time. Please wait a moment before trying again.')
-        }
-        
-        cache.set(`${email}-${typeCode}`, verificationCode, 1 * 60 * 60 )
+      const isExistsCode = cache.get(`${email}-${typeCode}`);
 
-        const mailOptions = {
-          from: process.env.EMAIL,
-          to: email,
-          subject: 'Resend verification code',
-          template: 'verify-user',
-          context: {
-            verificationCode,
-            username,
-          }
-        }  
+      // if (isExistsCode) {
+      //   return createResponse(
+      //     res,
+      //     400,
+      //     false,
+      //     'You have sent too many requests in a short period of time. Please wait a moment before trying again.',
+      //   );
+      // }
+
+      cache.set(`${email}-${typeCode}`, verificationCode, 1 * 60 * 60);
+
+      const mailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: 'Resend verification code',
+        template: 'verify-user',
+        context: {
+          verificationCode,
+          username,
+        },
+      };
+
+      createResponse(
+        res,
+        200,
+        true,
+        'Send mail successfully, please check your email to verify account',
+      );
 
       try {
         await transporter.sendMail(mailOptions);
       } catch (error) {
-        return createResponse(res, 500, false, 'Send mail failed, please try again!')
+        return createResponse(
+          res,
+          500,
+          false,
+          'Send mail failed, please try again!',
+        );
       }
-
-    return createResponse(res, 200, true, 'Send mail successfully, please check your email to verify account');
-    
-  } catch (error) {
-    next(error)
+    } catch (error) {
+      next(error);
+    }
   }
-}
 
   /**
    * @swagger
@@ -621,10 +661,14 @@ export default class AuthController {
    *              type: string
    */
 
-  async resetPassword(req: Request | any, res: Response, next: NextFunction): Promise<object> {
+  async resetPassword(
+    req: Request | any,
+    res: Response,
+    next: NextFunction,
+  ): Promise<object> {
     try {
       const { email } = req.query;
-      const { password,  verificationCode} = req.body;
+      const { password, verificationCode } = req.body;
       if (!password || !verificationCode) {
         return createResponse(res, 400, false, 'invalid input');
       }
@@ -635,14 +679,19 @@ export default class AuthController {
       }
 
       if (cache.get(`${email}-verify-password`) != verificationCode) {
-        return createResponse(res, 400, false, 'The verification code you entered is invalid or has expired. Please check the code and try again ')
+        return createResponse(
+          res,
+          400,
+          false,
+          'The verification code you entered is invalid or has expired. Please check the code and try again ',
+        );
       }
 
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
         user.password = await hashedPassword;
         await user.save();
-        cache.del(`${email}-verify-password`)
+        cache.del(`${email}-verify-password`);
       } catch (error) {
         return createResponse(res, 400, false, error.message);
       }
@@ -652,5 +701,4 @@ export default class AuthController {
       return createResponse(res, 500, false, error.message);
     }
   }
-
 }

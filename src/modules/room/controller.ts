@@ -215,10 +215,13 @@ export default class Controller {
    *              type: object
    */
 
-  async showRoomDetail(req: Request | any, res: Response, next: NextFunction) {
+  async showRoomDetail(req: any, res: Response, next: NextFunction): Promise <any> {
     try {
       const { roomId } = req.params;
       const user = req.user.id
+
+      console.log(roomId);
+      
       
       const room = await Room.findById(roomId)
                               .populate('owner', 'firstname lastname')

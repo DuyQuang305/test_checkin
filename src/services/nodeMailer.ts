@@ -20,10 +20,9 @@ const options = {
     partialsDir: 'templates/',
   },
   viewPath: 'templates',
-  extName: ".handlebars",
+  extName: '.handlebars',
 };
 
 transporter.use('compile', hbs(options));
 
 module.exports = transporter;
-

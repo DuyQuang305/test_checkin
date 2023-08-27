@@ -9,7 +9,7 @@ export default async function signToken(
     const payload = { id, email };
   
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: '10m',
+      expiresIn: '1h',
     });
 
     const refreshToken = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: '1d'});
